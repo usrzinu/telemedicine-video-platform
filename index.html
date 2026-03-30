@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraMed - Telemedicine Video Consultation Platform</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="light">
+    <!-- Animated Background Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <span class="text-gradient">AuraMed</span>
+            </a>
+            
+            <div class="nav-links">
+                <a href="#about">About AI</a>
+                <a href="#features">Features</a>
+                <a href="#doctors">Our Doctors</a>
+            </div>
+            
+            <div class="nav-links">
+                <button id="theme-toggle" class="btn btn-outline" style="border: none; padding: 0.5rem;"><i class="fa-solid fa-moon"></i></button>
+                <a href="login.html" class="btn btn-outline">Sign In</a>
+                <a href="signup.html" class="btn btn-primary">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content glass-card glass">
+            <h1>The Future of <span class="text-gradient">Medical Consultation</span> Powered by AI</h1>
+            <p>Experience ultra-secure, crystal clear video consultations with verified doctors globally. Intelligent symptom checking, instant prescriptions, and your complete medical history all in one place.</p>
+            <div class="hero-buttons">
+                <a href="signup.html" class="btn btn-primary">Get Started as Patient</a>
+                <a href="signup.html?role=doctor" class="btn btn-outline">Apply as Doctor</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Medical AI About Section -->
+    <section class="features" id="about">
+        <div class="section-title">
+            <h2><span class="text-gradient">Beautiful Medical AI</span></h2>
+            <p>Our platform uses advanced predictive models to help categorize your symptoms before you even enter the consultation room.</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card glass-card glass">
+                <i class="fa-solid fa-brain"></i>
+                <h3>Smart Diagnosis Prep</h3>
+                <p>Describe your issue, and our AI summarizes key points for the doctor, saving valuable consultation time.</p>
+            </div>
+            <div class="feature-card glass-card glass">
+                <i class="fa-solid fa-video"></i>
+                <h3>HD Encrypted Video</h3>
+                <p>Peer-to-peer encrypted connections ensure your consultations are absolutely private and secure.</p>
+            </div>
+            <div class="feature-card glass-card glass">
+                <i class="fa-solid fa-file-prescription"></i>
+                <h3>Instant Prescriptions</h3>
+                <p>Receive digitally signed, immutable prescriptions immediately after the consultation ends.</p>
+            </div>
+            <div class="feature-card glass-card glass">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <h3>Medical History</h3>
+                <p>Secure, decentralized tracking of your past visits, prescriptions, and lab reports.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+</body>
+</html>
