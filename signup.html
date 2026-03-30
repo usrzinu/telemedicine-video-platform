@@ -19,13 +19,30 @@
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
 
-    <div class="auth-container">
-        <div class="auth-card glass-card glass" style="max-width: 550px;">
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="scrolled">
+        <div class="nav-container">
             <a href="index.html" class="logo">
                 <i class="fa-solid fa-heart-pulse"></i>
                 <span class="text-gradient">AuraMed</span>
             </a>
             
+            <div class="nav-links">
+                <a href="index.html#about">About AI</a>
+                <a href="index.html#features">Features</a>
+                <a href="index.html#tips">Preparation Tips</a>
+            </div>
+            
+            <div class="nav-links">
+                <button id="theme-toggle" class="btn btn-outline" style="border: none; padding: 0.5rem;"><i class="fa-solid fa-moon"></i></button>
+                <a href="login.html" class="btn btn-outline">Sign In</a>
+                <a href="signup.html" class="btn btn-primary" style="box-shadow: none;">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="auth-container" style="padding-top: 6rem;">
+        <div class="auth-card glass-card glass" style="max-width: 550px;">
             <h2 style="margin-bottom: 2rem;">Create Your Account</h2>
             
             <form class="auth-form" id="signupForm">
@@ -35,6 +52,7 @@
                     <select name="role" id="roleSelect">
                         <option value="patient">Patient (Seek Medical Advice)</option>
                         <option value="doctor">Doctor (Provide Consultations)</option>
+                        <option value="admin">Admin (System Monitor)</option>
                     </select>
                 </div>
 
@@ -73,15 +91,5 @@
 
     <!-- Scripts -->
     <script src="js/main.js"></script>
-    <script>
-        // Check URL for role parameter (e.g., ?role=doctor)
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const role = urlParams.get('role');
-            if(role === 'doctor') {
-                document.getElementById('roleSelect').value = 'doctor';
-            }
-        });
-    </script>
 </body>
 </html>

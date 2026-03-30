@@ -50,14 +50,24 @@ if (navbar) {
     });
 }
 
+// Extract URL role parameter globally and apply to the dropdown
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role');
+    const roleSelect = document.getElementById('roleSelect');
+    if(role && roleSelect) {
+        roleSelect.value = role;
+    }
+});
+
 // Simple Form Handling (Prevent actual submission for frontend demo)
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        // In a real app we'd authenticate. For now, pretend patient login
         const email = document.getElementById('email').value;
-        alert(`Authentication mock: Logging in ${email}... \n(Dashboard UI coming next!)`);
+        const role = document.getElementById('roleSelect') ? document.getElementById('roleSelect').value : 'Patient';
+        alert(`Authentication mock: Logging into ${role} portal with ${email}... \n(Dashboard UI coming next!)`);
     });
 }
 
