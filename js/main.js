@@ -58,6 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if(role && roleSelect) {
         roleSelect.value = role;
     }
+
+    // Role Selection Logic for Doctor Notice
+    const doctorNotice = document.getElementById('doctorApprovalNotice');
+    if (roleSelect && doctorNotice) {
+        const toggleNotice = () => {
+            if (roleSelect.value === 'doctor') {
+                doctorNotice.style.display = 'block';
+            } else {
+                doctorNotice.style.display = 'none';
+            }
+        };
+        toggleNotice(); // init
+        roleSelect.addEventListener('change', toggleNotice);
+    }
 });
 
 // Simple Form Handling (Prevent actual submission for frontend demo)
@@ -67,7 +81,12 @@ if (loginForm) {
         e.preventDefault();
         const email = document.getElementById('email').value;
         const role = document.getElementById('roleSelect') ? document.getElementById('roleSelect').value : 'Patient';
-        alert(`Authentication mock: Logging into ${role} portal with ${email}... \n(Dashboard UI coming next!)`);
+        
+        if (role === 'doctor') {
+            alert(`Authentication failed for ${email}.\n\nYour Doctor account is pending Admin approval. Please wait until your credentials are verified.`);
+        } else {
+            alert(`Authentication mock: Logging into ${role} portal with ${email}... \n(Dashboard UI coming next!)`);
+        }
     });
 }
 
@@ -77,6 +96,11 @@ if (signupForm) {
         e.preventDefault();
         const role = document.getElementById('roleSelect').value;
         const fname = document.getElementById('firstName').value;
-        alert(`Account mock: Creating ${role} account for ${fname}...`);
+        
+        if (role === 'doctor') {
+            alert(`Registration submitted for Dr. ${fname}!\n\nYour Doctor account is now pending Admin approval. You will receive an email once your account has been verified and activated.`);
+        } else {
+            alert(`Account mock: Creating ${role} account for ${fname}...`);
+        }
     });
 }

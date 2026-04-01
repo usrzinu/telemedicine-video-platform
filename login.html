@@ -28,7 +28,7 @@
             </a>
             
             <div class="nav-links">
-                <a href="index.html#about">About AI</a>
+                <a href="index.html#about">About Service</a>
                 <a href="index.html#features">Features</a>
                 <a href="index.html#tips">Preparation Tips</a>
             </div>
@@ -47,7 +47,7 @@
             
             <form class="auth-form" id="loginForm">
                 <div class="form-group">
-                    <label>I am logging in as a</label>
+                    <label>Login as</label>
                     <select name="role" id="roleSelect">
                         <option value="patient">Patient</option>
                         <option value="doctor">Doctor</option>
@@ -55,9 +55,14 @@
                     </select>
                 </div>
 
+                <div id="doctorApprovalNotice" style="display: none; background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--secondary); padding: 0.8rem; margin-bottom: 1.5rem; border-radius: 4px; font-size: 0.85rem; color: var(--text-color);">
+                    <i class="fa-solid fa-circle-info" style="color: var(--secondary); margin-right: 0.5rem;"></i>
+                    <strong>Note:</strong> Doctor accounts require Admin approval before you can successfully sign in.
+                </div>
+
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="john@example.com" required>
+                    <input type="email" id="email" name="email" placeholder="zinu@gmail.com" required>
                 </div>
                 
                 <div class="form-group">
@@ -73,9 +78,6 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Sign In</button>
-                <button type="button" class="btn btn-outline" style="margin-top: 0.5rem;">
-                    <i class="fa-brands fa-google" style="margin-right: 0.5rem;"></i> Continue with Google
-                </button>
             </form>
             
             <div class="auth-footer">
