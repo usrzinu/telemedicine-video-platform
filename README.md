@@ -81,6 +81,12 @@ auramed/
 ├── router.php              # Local development server router
 ├── requirements.txt        # Environment requirements
 └── README.md               # Project documentation
-```
+---
+
+## ⚖️ License
+
+Copyright © 2026 AuraMed Telemedicine. All Rights Reserved. 
+
+This project is proprietary software. Unauthorized copying, modification, or distribution is strictly prohibited. Refer to the [LICENSE](file:///e:/telemedicine-video-platform/LICENSE) file for full terms and conditions.
 
 
