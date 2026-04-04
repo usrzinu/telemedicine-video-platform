@@ -1,0 +1,27 @@
+# AuraMed Authentication System Requirements
+
+# Environment Details
+PHP Version: >= 7.4.0
+Database: PostgreSQL >= 10.0
+
+# PHP Extensions Required
+PDO
+PDO_PGSQL
+
+# Instructions
+1. Run `backend/database/schema.sql` to initialize the PostgreSQL table.
+2. Ensure you have a database `auramed_db` and a user `postgres` with password `usrzinu`. 
+   If different, update `backend/config/database.php`.
+3. To test locally using PHP's built-in server with routing enabled, you can run:
+
+   For Windows Command Prompt/PowerShell (from the root of the project):
+   php -S localhost:8000 -t . router.php
+
+   (Where router.php is a small script you can create at the root:
+   <?php
+   if (preg_match('/^\/api\//', $_SERVER["REQUEST_URI"])) {
+       include __DIR__ . '/backend/routes/auth.php';
+   } else {
+       return false; // serve the requested resource as-is.
+   }
+   ?>)
