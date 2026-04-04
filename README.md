@@ -57,8 +57,9 @@ Open your web browser and navigate to:
 To view the registered users and their roles directly from your terminal, run this command:
 
 ```powershell
-& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d auramed_db -c "SELECT * FROM users;"
+psql -U postgres -d auramed_db -c "SELECT * FROM users;"
 ```
+ SELECT * FROM users;
 
 **Password is:** `usrzinu`
 
