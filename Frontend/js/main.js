@@ -72,35 +72,36 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleNotice(); // init
         roleSelect.addEventListener('change', toggleNotice);
     }
+
+    // --- Authentication UI Logic ---
+    const userRole = localStorage.getItem('userRole');
+    const userName = localStorage.getItem('userName');
+    const navLinks = document.querySelectorAll('.nav-links');
+
+    if (userRole && userName && navLinks.length >= 2) {
+        // The second .nav-links container usually holds the Sign In/Sign Up buttons
+        const authButtonsContainer = navLinks[1];
+        
+        // Define dashboard link based on role
+        const dashboardUrl = {
+            'admin': 'admin.html',
+            'doctor': 'doctor.html',
+            'patient': 'patient.html'
+        }[userRole] || 'index.html';
+
+        authButtonsContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="font-size: 0.9rem; font-weight: 500;">Welcome, <a href="${dashboardUrl}" style="color: var(--primary); text-decoration: none;">${userName}</a></span>
+                <button id="logoutBtn" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Sign Out</button>
+            </div>
+        `;
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        });
+    }
 });
 
-// Simple Form Handling (Prevent actual submission for frontend demo)
-const loginForm = document.getElementById('loginForm');
-if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const role = document.getElementById('roleSelect') ? document.getElementById('roleSelect').value : 'Patient';
-        
-        if (role === 'doctor') {
-            alert(`Authentication failed for ${email}.\n\nYour Doctor account is pending Admin approval. Please wait until your credentials are verified.`);
-        } else {
-            alert(`Authentication mock: Logging into ${role} portal with ${email}... \n(Dashboard UI coming next!)`);
-        }
-    });
-}
+// Form handling is now managed by js/auth.js for real backend integration
 
-const signupForm = document.getElementById('signupForm');
-if (signupForm) {
-    signupForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const role = document.getElementById('roleSelect').value;
-        const fname = document.getElementById('firstName').value;
-        
-        if (role === 'doctor') {
-            alert(`Registration submitted for Dr. ${fname}!\n\nYour Doctor account is now pending Admin approval. You will receive an email once your account has been verified and activated.`);
-        } else {
-            alert(`Account mock: Creating ${role} account for ${fname}...`);
-        }
-    });
-}

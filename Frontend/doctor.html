@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Portal - AuraMed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <nav id="navbar" class="scrolled">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <span class="text-gradient">AuraMed</span>
+            </a>
+            <div class="nav-links">
+                <span id="welcomeMsg" style="font-weight: 600;">Welcome, Doctor</span>
+                <button id="logoutBtn" class="btn btn-outline" style="padding: 0.5rem 1rem;">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="auth-container" style="padding-top: 8rem;">
+        <div class="glass-card glass" style="max-width: 800px; padding: 3rem; text-align: center;">
+            <i class="fa-solid fa-stethoscope" style="font-size: 3rem; color: var(--primary); margin-bottom: 2rem;"></i>
+            <h1 class="text-gradient">Doctor Portal</h1>
+            <p style="margin-top: 1rem; color: var(--text-muted);">Manage your appointments and prescriptions from this secure medical provider environment.</p>
+            
+            <div style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left;">
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3>Upcoming Consultations</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">No consultations for today. Update your availability in Settings.</p>
+                </div>
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <h3>Recent Prescriptions</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">No prescriptions found. Logged in as Dr. <span id="drNameSuffix"></span>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userName = localStorage.getItem('userName');
+            const userRole = localStorage.getItem('userRole');
+            if (!userRole || userRole !== 'doctor') {
+                window.location.href = 'login.html';
+            }
+            document.getElementById('welcomeMsg').innerText = `Welcome, Dr. ${userName}`;
+            document.getElementById('drNameSuffix').innerText = userName;
+        });
+    </script>
+</body>
+</html>
