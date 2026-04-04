@@ -1,13 +1,21 @@
 <?php
 
 class Database {
-    // Database Config
-    private $host = "localhost";
-    private $port = "5432";
-    private $db_name = "auramed_db";
-    private $username = "postgres";
-    private $password = "usrzinu";
+    // Database credentials from environment
+    private $host;
+    private $port;
+    private $db_name;
+    private $username;
+    private $password;
     public $conn;
+
+    public function __construct() {
+        $this->host = getenv('DB_HOST') ?: "localhost";
+        $this->port = getenv('DB_PORT') ?: "5432";
+        $this->db_name = getenv('DB_NAME') ?: "auramed_db";
+        $this->username = getenv('DB_USER') ?: "postgres";
+        $this->password = getenv('DB_PASS') ?: "usrzinu";
+    }
 
     // Get the database connection
     public function getConnection() {

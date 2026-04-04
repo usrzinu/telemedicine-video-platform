@@ -8,9 +8,9 @@
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// 1. Route API requests to the backend routes script
+// 1. Route API requests to the backend entry point (index.php)
 if (strpos($uri, '/api/') === 0) {
-    include __DIR__ . '/backend/routes/auth.php';
+    include __DIR__ . '/backend/index.php';
     exit;
 }
 
