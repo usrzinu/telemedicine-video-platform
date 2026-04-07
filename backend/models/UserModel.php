@@ -55,5 +55,17 @@ class UserModel {
         
         return false;
     }
+    // Find a user by ID
+    public function getUserById($id) {
+        $query = "SELECT id, name, email, role, is_verified FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->execute();
+        
+        if ($stmt->rowCount() > 0) {
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+        return false;
+    }
 }
 ?>

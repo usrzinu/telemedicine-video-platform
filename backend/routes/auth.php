@@ -12,19 +12,24 @@ $authController = new AuthController();
 // Parse the request URI for endpoint identification
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Get the POST JSON payload
-$data = json_decode(file_get_contents("php://input"));
-
-// Route logic
+// Handle Registration (Supports JSON and Multipart/FormData)
 if (strpos($uri, '/api/register') !== false) {
-    // Check if correct method
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);
         echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
         exit;
     }
-    // Handle Registration
-    $authController->register($data);
+    
+    // Check if it's a FormData request or JSON
+    $contentType = isset($_SERVER["CONTENT_TYPE"]) ? $_SERVER["CONTENT_TYPE"] : '';
+    if (strpos($contentType, 'multipart/form-data') !== false) {
+        $data = (object)$_POST;
+        $files = $_FILES;
+        $authController->register($data, $files);
+    } else {
+        $data = json_decode(file_get_contents("php://input"));
+        $authController->register($data);
+    }
 } else if (strpos($uri, '/api/login') !== false) {
     // Check if correct method
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
