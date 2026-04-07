@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraMed - Doctor Application</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/notifications.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top left, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .apply-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .apply-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .apply-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .apply-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .apply-header p {
+            color: #94a3b8;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1);
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-box {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-box:hover {
+            border-color: #4facfe;
+            background: rgba(79, 172, 254, 0.05);
+        }
+
+        .file-upload-box i {
+            font-size: 2rem;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-box p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(79, 172, 254, 0.5);
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+
+        .file-selected-name {
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: #4facfe;
+        }
+    </style>
+</head>
+<body>
+    <div class="apply-container">
+        <div class="apply-card">
+            <div class="apply-header">
+                <h1>Verify Your Profile</h1>
+                <p>Complete your application to start consulting on AuraMed</p>
+            </div>
+            
+            <form id="doctorApplyForm" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="specialization">Specialization</label>
+                        <input type="text" id="specialization" name="specialization" placeholder="e.g. Cardiologist" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="experience">Experience (Years)</label>
+                        <input type="number" id="experience" name="experience" placeholder="e.g. 5" min="0" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="qualification">Qualification</label>
+                    <input type="text" id="qualification" name="qualification" placeholder="e.g. MBBS, MD - Internal Medicine" required>
+                </div>
+
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="consultation_fee">Consultation Fee (৳)</label>
+                        <input type="number" id="consultation_fee" name="consultation_fee" placeholder="e.g. 500" min="0" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="license_number">Medical License Number</label>
+                        <input type="text" id="license_number" name="license_number" placeholder="Enter license digits" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="file-upload-wrapper">
+                        <label>Medical License (PDF/JPG/PNG)</label>
+                        <div class="file-upload-box" onclick="document.getElementById('license_file').click()">
+                            <i class="fa-solid fa-file-contract"></i>
+                            <p id="license_text">Click to upload license</p>
+                            <span id="license_name" class="file-selected-name"></span>
+                        </div>
+                        <input type="file" id="license_file" name="license_file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" required>
+                    </div>
+
+                    <div class="file-upload-wrapper">
+                        <label>Profile Photo (JPG/PNG)</label>
+                        <div class="file-upload-box" onclick="document.getElementById('profile_photo').click()">
+                            <i class="fa-solid fa-user-doctor"></i>
+                            <p id="photo_text">Click to upload photo</p>
+                            <span id="photo_name" class="file-selected-name"></span>
+                        </div>
+                        <input type="file" id="profile_photo" name="profile_photo" class="hidden-file-input" accept=".jpg,.jpeg,.png" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Submit Application</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/doctor.js"></script>
+    <script>
+        // Update file name display
+        document.getElementById('license_file').onchange = function() {
+            document.getElementById('license_name').innerText = this.files[0].name;
+            document.getElementById('license_text').innerText = "License selected";
+        };
+        document.getElementById('profile_photo').onchange = function() {
+            document.getElementById('photo_name').innerText = this.files[0].name;
+            document.getElementById('photo_text').innerText = "Photo selected";
+        };
+    </script>
+</body>
+</html>

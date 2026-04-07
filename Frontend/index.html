@@ -50,7 +50,7 @@
             <p>Experience ultra-secure, crystal clear video consultations with verified doctors globally. Connect with professionals, get instant prescriptions, and keep your complete medical history all in one place.</p>
             <div class="hero-buttons">
                 <a href="signup.html" class="btn btn-primary">Get Started Today</a>
-                <a href="login.html" class="btn btn-outline">Sign In to Account</a>
+                <a href="signup.html?role=doctor" class="btn btn-outline" style="border-color: var(--secondary); color: var(--secondary);">Apply as a Doctor</a>
             </div>
         </div>
     </section>
@@ -114,6 +114,20 @@
                     <h3>Check your connection</h3>
                     <p>Join the waiting room 5 minutes early to test your camera, microphone, and internet stability.</p>
                 </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Dynamic Doctors Section -->
+    <section class="features" id="doctors">
+        <div class="section-title">
+            <h2>Our <span class="text-gradient">Verified Specialist Doctors</span></h2>
+            <p>Connect with expert medical professionals for high-quality consultations.</p>
+        </div>
+        <div class="features-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));" id="doctors-list">
+            <!-- Dynamic content will be loaded here -->
+            <div class="glass-card glass" style="text-align: center; padding: 2rem; grid-column: 1 / -1;">
+                <p style="color: var(--text-muted);">Loading doctors...</p>
             </div>
         </div>
     </section>
@@ -186,5 +200,6 @@
 
     <!-- Scripts -->
     <script src="js/main.js"></script>
+    <script src="js/landing.js"></script>
 </body>
 </html>
