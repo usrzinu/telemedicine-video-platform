@@ -38,6 +38,7 @@ if (strpos($uri, '/api/register') !== false) {
         exit;
     }
     // Handle Login
+    $data = json_decode(file_get_contents("php://input"));
     $authController->login($data);
 } else {
     // Fallback error (should normally be caught by index.php)

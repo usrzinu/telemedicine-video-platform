@@ -58,8 +58,15 @@ class AuthController {
         // Hash the password
         $hashedPassword = password_hash($data->password, PASSWORD_BCRYPT);
 
-        // Start Transaction (if possible, but using simple logic here)
-        if ($this->userModel->createUser($data->name, $data->email, $hashedPassword, $data->role)) {
+        // Start Database Transaction
+        $this->db->beginTransaction();
+
+        try {
+            // Create user
+            if (!$this->userModel->createUser($data->name, $data->email, $hashedPassword, $data->role)) {
+                throw new Exception("Failed to create user account.");
+            }
+
             $user = $this->userModel->findUserByEmail($data->email);
             
             // Handle Doctor Profile
@@ -71,10 +78,18 @@ class AuthController {
                 $licensePath = $this->uploadHelper($files['license_file'], 'licenses', ['pdf', 'jpg', 'png']);
                 $photoPath = $this->uploadHelper($files['profile_photo'], 'photos', ['jpg', 'png', 'jpeg']);
 
-                if (!$licensePath || !$photoPath) {
-                    $this->sendResponse("error", "File upload failed. Check format and size.");
-                    return;
+                if (is_array($licensePath) && $licensePath['status'] === 'error') {
+                    throw new Exception("Medical license upload failed: " . $licensePath['message']);
                 }
+                if (is_array($photoPath) && $photoPath['status'] === 'error') {
+                    throw new Exception("Profile photo upload failed: " . $photoPath['message']);
+                }
+
+                $licensePathStr = $licensePath['path'];
+                $photoPathStr = $photoPath['path'];
+
+                // Auto-resize profile photo to keep standard size (max 800px)
+                $this->resizeImage(__DIR__ . "/../../" . $photoPathStr, 800);
 
                 require_once __DIR__ . '/../models/DoctorModel.php';
                 $doctorModel = new DoctorModel($this->db);
@@ -85,21 +100,24 @@ class AuthController {
                     'qualification' => $data->qualification,
                     'consultation_fee' => $data->consultation_fee,
                     'license_number' => $data->license_number,
-                    'license_file' => $licensePath,
-                    'profile_photo' => $photoPath
+                    'license_file' => $licensePathStr,
+                    'profile_photo' => $photoPathStr
                 ];
 
-                if ($doctorModel->apply($docData)) {
-                    echo json_encode([
-                        "status" => "success",
-                        "message" => "Application submitted. Waiting for admin approval.",
-                        "require_approval" => true
-                    ]);
-                } else {
-                    $this->sendResponse("error", "Failed to create doctor profile.");
+                if (!$doctorModel->apply($docData)) {
+                    throw new Exception("Failed to create doctor profile.");
                 }
+
+                $this->db->commit();
+                echo json_encode([
+                    "status" => "success",
+                    "message" => "Application submitted. Waiting for admin approval.",
+                    "require_approval" => true
+                ]);
+
             } else {
                 // Auto-login for Patients/Admins
+                $this->db->commit();
                 echo json_encode([
                     "status" => "success",
                     "message" => "Registration successful.",
@@ -108,8 +126,11 @@ class AuthController {
                     "role" => $user['role']
                 ]);
             }
-        } else {
-            $this->sendResponse("error", "Failed to register user.");
+
+        } catch (Exception $e) {
+            // Roll back everything if any part fails
+            $this->db->rollBack();
+            $this->sendResponse("error", $e->getMessage());
         }
     }
 
@@ -119,13 +140,85 @@ class AuthController {
     private function uploadHelper($file, $subFolder, $allowedExts) {
         $targetDir = __DIR__ . "/../uploads/" . $subFolder . "/";
         if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+        
         $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-        if (!in_array($ext, $allowedExts) || $file["size"] > 2000000) return false;
+        
+        // 1. Validate extension
+        if (!in_array($ext, $allowedExts)) {
+            return ["status" => "error", "message" => "Invalid file format '$ext'. Allowed: " . implode(', ', $allowedExts)];
+        }
+
+        // 2. Size limit (Increased to 20MB / how much size matters? No matter system)
+        if ($file["size"] > 20000000) { 
+            return ["status" => "error", "message" => "File size exceeds 20MB limit."];
+        }
+
         $newFileName = uniqid($subFolder . "_") . "." . $ext;
         if (move_uploaded_file($file["tmp_name"], $targetDir . $newFileName)) {
-            return "backend/uploads/" . $subFolder . "/" . $newFileName;
+            return [
+                "status" => "success",
+                "path" => "backend/uploads/" . $subFolder . "/" . $newFileName
+            ];
         }
-        return false;
+        
+        return ["status" => "error", "message" => "Server failed to move uploaded file."];
+    }
+
+    /**
+     * Automatic Image Resizing
+     * Scales image down proportionally to fit within $maxDim
+     */
+    private function resizeImage($filePath, $maxDim) {
+        if (!file_exists($filePath)) return false;
+        
+        // Check if GD is available
+        if (!function_exists('imagecreatefromjpeg')) return false;
+
+        list($width, $height, $type) = getimagesize($filePath);
+        if (!$width || !$height) return false;
+
+        // Only resize if it's larger than max dimension
+        if ($width <= $maxDim && $height <= $maxDim) return true;
+
+        $ratio = $width / $height;
+        if ($ratio > 1) {
+            $newWidth = $maxDim;
+            $newHeight = $maxDim / $ratio;
+        } else {
+            $newWidth = $maxDim * $ratio;
+            $newHeight = $maxDim;
+        }
+
+        $src = null;
+        switch ($type) {
+            case IMAGETYPE_JPEG: $src = imagecreatefromjpeg($filePath); break;
+            case IMAGETYPE_PNG:  $src = imagecreatefrompng($filePath); break;
+            case IMAGETYPE_GIF:  $src = imagecreatefromgif($filePath); break;
+            default: return false;
+        }
+
+        if (!$src) return false;
+
+        $dst = imagecreatetruecolor($newWidth, $newHeight);
+        
+        // Handle transparency for PNGs
+        if ($type == IMAGETYPE_PNG) {
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+        }
+
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        // Overwrite the original file with the resized version
+        switch ($type) {
+            case IMAGETYPE_JPEG: imagejpeg($dst, $filePath, 85); break;
+            case IMAGETYPE_PNG:  imagepng($dst, $filePath); break;
+            case IMAGETYPE_GIF:  imagegif($dst, $filePath); break;
+        }
+
+        imagedestroy($src);
+        imagedestroy($dst);
+        return true;
     }
 
     // Process Login

@@ -59,10 +59,20 @@ class DoctorController {
             $licensePath = $this->uploadFile($files['license_file'], 'licenses', ['pdf', 'jpg', 'png']);
             $photoPath = $this->uploadFile($files['profile_photo'], 'photos', ['jpg', 'png', 'jpeg']);
 
-            if (!$licensePath || !$photoPath) {
-                $this->response("error", "File upload failed. Check format and size (max 2MB).");
+            if (is_array($licensePath) && $licensePath['status'] === 'error') {
+                $this->response("error", "Medical license upload failed: " . $licensePath['message']);
                 return;
             }
+            if (is_array($photoPath) && $photoPath['status'] === 'error') {
+                $this->response("error", "Profile photo upload failed: " . $photoPath['message']);
+                return;
+            }
+
+            $licensePathStr = $licensePath['path'];
+            $photoPathStr = $photoPath['path'];
+
+            // Auto-resize profile photo to keep standard size (max 800px)
+            $this->resizeImage(__DIR__ . "/../../" . $photoPathStr, 800);
 
             // 5. Save to database
             $doctorData = [
@@ -72,8 +82,8 @@ class DoctorController {
                 'qualification' => $data['qualification'],
                 'consultation_fee' => $data['consultation_fee'],
                 'license_number' => $data['license_number'],
-                'license_file' => $licensePath,
-                'profile_photo' => $photoPath
+                'license_file' => $licensePathStr,
+                'profile_photo' => $photoPathStr
             ];
 
             if ($this->doctorModel->apply($doctorData)) {
@@ -103,20 +113,27 @@ class DoctorController {
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
         // Validate extension
-        if (!in_array($ext, $allowedExts)) return false;
+        if (!in_array($ext, $allowedExts)) {
+            return ["status" => "error", "message" => "Invalid file format '$ext'. Allowed: " . implode(', ', $allowedExts)];
+        }
 
-        // Validate size (2MB)
-        if ($fileSize > 2000000) return false;
+        // Validate size (20MB)
+        if ($fileSize > 20000000) {
+            return ["status" => "error", "message" => "File size exceeds 20MB limit."];
+        }
 
         // Generate unique filename
         $newFileName = uniqid($subFolder . "_") . "." . $ext;
         $targetFile = $targetDir . $newFileName;
 
         if (move_uploaded_file($file["tmp_name"], $targetFile)) {
-            return "backend/uploads/" . $subFolder . "/" . $newFileName;
+            return [
+                "status" => "success",
+                "path" => "backend/uploads/" . $subFolder . "/" . $newFileName
+            ];
         }
 
-        return false;
+        return ["status" => "error", "message" => "Server failed to move uploaded file."];
     }
 
     /**
@@ -132,6 +149,55 @@ class DoctorController {
         } catch (Exception $e) {
             $this->response("error", "Server exception: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Automatic Image Resizing
+     */
+    private function resizeImage($filePath, $maxDim) {
+        if (!file_exists($filePath)) return false;
+        if (!function_exists('imagecreatefromjpeg')) return false;
+
+        list($width, $height, $type) = getimagesize($filePath);
+        if (!$width || !$height) return false;
+        if ($width <= $maxDim && $height <= $maxDim) return true;
+
+        $ratio = $width / $height;
+        if ($ratio > 1) {
+            $newWidth = $maxDim;
+            $newHeight = $maxDim / $ratio;
+        } else {
+            $newWidth = $maxDim * $ratio;
+            $newHeight = $maxDim;
+        }
+
+        $src = null;
+        switch ($type) {
+            case IMAGETYPE_JPEG: $src = imagecreatefromjpeg($filePath); break;
+            case IMAGETYPE_PNG:  $src = imagecreatefrompng($filePath); break;
+            case IMAGETYPE_GIF:  $src = imagecreatefromgif($filePath); break;
+            default: return false;
+        }
+
+        if (!$src) return false;
+
+        $dst = imagecreatetruecolor($newWidth, $newHeight);
+        if ($type == IMAGETYPE_PNG) {
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+        }
+
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        switch ($type) {
+            case IMAGETYPE_JPEG: imagejpeg($dst, $filePath, 85); break;
+            case IMAGETYPE_PNG:  imagepng($dst, $filePath); break;
+            case IMAGETYPE_GIF:  imagegif($dst, $filePath); break;
+        }
+
+        imagedestroy($src);
+        imagedestroy($dst);
+        return true;
     }
 
     /**

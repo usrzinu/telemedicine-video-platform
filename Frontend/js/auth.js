@@ -65,14 +65,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const preRole = urlParams.get('role');
     if (preRole && roleSelect) {
-        roleSelect.value = preRole;
-        // Trigger any logic dependent on role (like the doctor notice)
+        // If they arrive via "Apply as a Doctor", remove other roles
         if (preRole === 'doctor') {
+            Array.from(roleSelect.options).forEach(option => {
+                if (option.value !== 'doctor') {
+                    option.remove();
+                }
+            });
+            
+            // Show doctor-specific fields immediately
             const notice = document.getElementById('doctorApprovalNotice');
             const doctorFields = document.getElementById('doctor-specific-fields');
             if (notice) notice.style.display = 'block';
             if (doctorFields) doctorFields.style.display = 'block';
         }
+        
+        roleSelect.value = preRole;
     }
 
     // Role selection logic for notice and fields visibility
