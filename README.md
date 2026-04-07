@@ -16,9 +16,10 @@ AuraMed is a modern, secure, and professional telemedicine platform designed to 
 ## 🛠️ Tech Stack
 
 - **Frontend**: HTML5, CSS3 (Vanilla), JavaScript (ES6+).
-- **Backend**: PHP 7.4+ (Vanilla MVC).
-- **Database**: PostgreSQL.
-- **Server**: PHP Built-in Server with custom routing.
+- **Backend**: PHP 7.4+ (Front Controller Architecture).
+- **Environment**: Secure `.env` configuration for sensitive credentials.
+- **Database**: PostgreSQL integration with PDO.
+- **Server**: PHP Built-in Server with centralized routing via `index.php`.
 
 ---
 
@@ -34,19 +35,27 @@ Follow these steps to get the project running on your local machine:
 ### 2. Database Configuration
 1. Open your PostgreSQL client (like pgAdmin or psql).
 2. Create a new database named `auramed_db`.
-3. execute the SQL commands found in `backend/database/schema.sql` to create the `users` table.
-4. **Credential Verification**: If your PostgreSQL username or password differs from the defaults (`postgres` / `usrzinu`), update the configuration in `backend/config/database.php`.
-
-### 3. Running the Application
-AuraMed uses a unified directory structure. To serve both the Frontend and the Backend API simultaneously, use the provided `router.php`:
-
-1. Open a terminal/command prompt in the root directory of the project.
-2. Run the following command:
-   ```bash
-   php -S localhost:8000 router.php
+3. Execute the SQL commands found in `backend/database/schema.sql`.
+4. **Credential Setup**: Instead of editing `database.php`, simply modify the values in the new `.env` file in the `backend/` folder:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=auramed_db
+   DB_USER=postgres
+   DB_PASS=your_password
    ```
 
-### 4. Access the Platform
+### 3. Running the Application
+AuraMed now includes a quick-run script to make starting the platform easier:
+
+1. Open a terminal in the root directory.
+2. Run the platform with a single command:
+   ```powershell
+   .\run
+   ```
+   *(This starts the server at [http://localhost:8000](http://localhost:8000) using your local PHP installation).*
+
+### 4. Access the Platformp
 Open your web browser and navigate to:
 [http://localhost:8000](http://localhost:8000)
 
@@ -70,6 +79,8 @@ psql -U postgres -d auramed_db -c "SELECT * FROM users;"
 ```text
 auramed/
 ├── backend/                # Server-side logic
+│   ├── index.php           # Front Controller & Entry Point [NEW]
+│   ├── .env                # Secure Environment Variables [NEW]
 │   ├── config/             # DB Connection settings
 │   ├── controllers/        # Auth logic & Business rules
 │   ├── models/             # Database Queries
@@ -80,6 +91,7 @@ auramed/
 │   ├── js/                 # Authentication & UI logic
 │   └── *.html              # Page templates (Dashboards, Login, etc.)
 ├── router.php              # Local development server router
+├── run.bat                 # One-click startup script [NEW]
 ├── requirements.txt        # Environment requirements
 └── README.md               # Project documentation
 ---
