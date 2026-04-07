@@ -56,6 +56,9 @@ switch ($route) {
 
     case '/api/doctor/apply':
     case '/api/doctors':
+    case '/api/admin/pending':
+    case '/api/admin/update-status':
+    case '/api/admin/stats':
         // Include the doctor route handler
         require_once __DIR__ . '/routes/doctor.php';
         break;

@@ -239,6 +239,22 @@ class AuthController {
 
         // Verify password
         if (password_verify($data->password, $user['password'])) {
+            
+            // Check doctor approval status if applicable
+            if ($user['role'] === 'doctor') {
+                require_once __DIR__ . '/../models/DoctorModel.php';
+                $doctorModel = new DoctorModel($this->db);
+                $doc = $doctorModel->getByUserId($user['id']);
+                
+                if (!$doc || $doc['status'] === 'pending') {
+                    $this->sendResponse("error", "Account pending admin approval. Please check back later.");
+                    return;
+                } else if ($doc['status'] === 'rejected') {
+                    $this->sendResponse("error", "Your doctor application was rejected. Please contact support.");
+                    return;
+                }
+            }
+
             // Success response
             echo json_encode([
                 "status" => "success",

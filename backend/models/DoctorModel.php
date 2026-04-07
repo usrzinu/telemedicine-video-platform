@@ -18,8 +18,8 @@ class DoctorModel {
      */
     public function apply($data) {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (user_id, specialization, experience, qualification, consultation_fee, license_number, license_file, profile_photo) 
-                  VALUES (:user_id, :specialization, :experience, :qualification, :consultation_fee, :license_number, :license_file, :profile_photo)";
+                  (user_id, specialization, experience, qualification, consultation_fee, license_number, license_file, profile_photo, status) 
+                  VALUES (:user_id, :specialization, :experience, :qualification, :consultation_fee, :license_number, :license_file, :profile_photo, 'pending')";
 
         $stmt = $this->conn->prepare($query);
 
@@ -77,6 +77,63 @@ class DoctorModel {
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get all pending doctor applications for admin
+     */
+    public function getPendingDoctors() {
+        $query = "SELECT d.id, d.specialization, d.experience, d.qualification, d.consultation_fee, d.license_number, d.license_file, d.profile_photo, u.name as doctor_name, u.email 
+                  FROM " . $this->table_name . " d
+                  JOIN users u ON d.user_id = u.id
+                  WHERE d.status = 'pending'
+                  ORDER BY d.created_at ASC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Update doctor application status
+     */
+    public function updateStatus($id, $status) {
+        $query = "UPDATE " . $this->table_name . " SET status = :status WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':id', $id);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Get statistics for admin dashboard
+     */
+    public function getDashboardStats() {
+        // Get total patients
+        $pCountQuery = "SELECT COUNT(*) as count FROM users WHERE role = 'patient'";
+        $pStmt = $this->conn->prepare($pCountQuery);
+        $pStmt->execute();
+        $pCount = $pStmt->fetch(PDO::FETCH_ASSOC)['count'];
+
+        // Get total approved doctors
+        $dCountQuery = "SELECT COUNT(*) as count FROM " . $this->table_name . " WHERE status = 'approved'";
+        $dStmt = $this->conn->prepare($dCountQuery);
+        $dStmt->execute();
+        $dCount = $dStmt->fetch(PDO::FETCH_ASSOC)['count'];
+
+        // Get total pending registrations
+        $pendingQuery = "SELECT COUNT(*) as count FROM " . $this->table_name . " WHERE status = 'pending'";
+        $pendingStmt = $this->conn->prepare($pendingQuery);
+        $pendingStmt->execute();
+        $pendingCount = $pendingStmt->fetch(PDO::FETCH_ASSOC)['count'];
+
+        return [
+            "patients" => $pCount,
+            "doctors" => $dCount,
+            "pending" => $pendingCount
+        ];
     }
 }
 ?>

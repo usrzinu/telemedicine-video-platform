@@ -8,53 +8,75 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-
-    <nav id="navbar" class="scrolled">
-        <div class="nav-container">
-            <a href="index.html" class="logo">
-                <i class="fa-solid fa-heart-pulse"></i>
+    <!-- Top Navbar -->
+    <nav class="top-navbar">
+        <div class="top-navbar-left">
+            <div class="sidebar-logo" style="margin-bottom: 0;">
+                <i class="fa-solid fa-heart-pulse" style="color: var(--primary);"></i>
                 <span class="text-gradient">AuraMed</span>
-            </a>
-            <div class="nav-links">
-                <span id="welcomeMsg" style="font-weight: 600;">Welcome, Doctor</span>
-                <button id="logoutBtn" class="btn btn-outline" style="padding: 0.5rem 1rem;">Sign Out</button>
+            </div>
+            <div class="top-nav-btn active" id="overviewBtn">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span>My Consultations</span>
+            </div>
+        </div>
+        <div class="top-navbar-right">
+            <div id="welcomeMsg" style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted);">Welcome, Doctor</div>
+            <div id="logoutBtn" class="top-nav-btn sign-out">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
             </div>
         </div>
     </nav>
 
-    <div class="auth-container" style="padding-top: 8rem;">
-        <div class="glass-card glass" style="max-width: 800px; padding: 3rem; text-align: center;">
-            <i class="fa-solid fa-stethoscope" style="font-size: 3rem; color: var(--primary); margin-bottom: 2rem;"></i>
-            <h1 class="text-gradient">Doctor Portal</h1>
-            <p style="margin-top: 1rem; color: var(--text-muted);">Manage your appointments and prescriptions from this secure medical provider environment.</p>
-            
-            <div style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left;">
-                <div class="glass-card" style="padding: 1.5rem;">
-                    <h3>Upcoming Consultations</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-muted);">No consultations for today. Update your availability in Settings.</p>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <div class="nav-item active">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Schedule</span>
                 </div>
-                <div class="glass-card" style="padding: 1.5rem;">
-                    <h3>Recent Prescriptions</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-muted);">No prescriptions found. Logged in as Dr. <span id="drNameSuffix"></span>.</p>
+                <div class="nav-item">
+                    <i class="fa-solid fa-hospital-user"></i>
+                    <span>My Patients</span>
                 </div>
-            </div>
-        </div>
+                <div class="nav-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>E-Prescriptions</span>
+                </div>
+                <div class="nav-item">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Profile Settings</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="dash-header">
+                <div>
+                    <h1 class="text-gradient" id="welcomeMsg" style="margin-bottom: 0.5rem;">Doctor Portal</h1>
+                    <p style="margin-bottom: 0; color: var(--text-muted);">Manage your clinical activities securely.</p>
+                </div>
+                <div class="glass" style="padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.9rem; font-weight: 600;">
+                    <i class="fa-solid fa-stethoscope" style="color: var(--primary); margin-right: 0.5rem;"></i>
+                    Medical Provider
+                </div>
+            </header>
+
+
+        </main>
     </div>
 
-    <script src="js/main.js"></script>
+    <!-- User Verification Scripts -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const userName = localStorage.getItem('userName');
-            const userRole = localStorage.getItem('userRole');
-            if (!userRole || userRole !== 'doctor') {
-                window.location.href = 'login.html';
-            }
-            document.getElementById('welcomeMsg').innerText = `Welcome, Dr. ${userName}`;
-            document.getElementById('drNameSuffix').innerText = userName;
-        });
+        const userRole = localStorage.getItem('userRole');
+        if (!userRole || userRole !== 'doctor') {
+            window.location.href = 'login.html';
+        }
     </script>
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

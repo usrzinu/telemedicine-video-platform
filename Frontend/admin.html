@@ -9,55 +9,132 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-
-    <nav id="navbar" class="scrolled">
-        <div class="nav-container">
-            <a href="index.html" class="logo">
-                <i class="fa-solid fa-heart-pulse"></i>
+    <!-- Top Navbar -->
+    <nav class="top-navbar">
+        <div class="top-navbar-left">
+            <div class="sidebar-logo" style="margin-bottom: 0;">
+                <i class="fa-solid fa-heart-pulse" style="color: var(--primary);"></i>
                 <span class="text-gradient">AuraMed</span>
-            </a>
-            <div class="nav-links">
-                <span id="welcomeMsg" style="font-weight: 600;">Welcome</span>
-                <button id="logoutBtn" class="btn btn-outline" style="padding: 0.5rem 1rem;">Sign Out</button>
+            </div>
+            <div class="top-nav-btn active" id="overviewBtn">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Overview</span>
+            </div>
+            <div class="top-nav-btn" id="totalDoctorsBtn">
+                <i class="fa-solid fa-user-doctor"></i>
+                <span>Total Doctors</span>
+            </div>
+        </div>
+        <div class="top-navbar-right">
+            <div id="welcomeMsg" style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted);">Welcome, Admin</div>
+            <div id="logoutBtn" class="top-nav-btn sign-out">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
             </div>
         </div>
     </nav>
 
-    <div class="auth-container" style="padding-top: 8rem;">
-        <div class="glass-card glass" style="max-width: 800px; padding: 3rem; text-align: center;">
-            <i class="fa-solid fa-user-shield" style="font-size: 3rem; color: var(--primary); margin-bottom: 2rem;"></i>
-            <h1 class="text-gradient">Admin Dashboard</h1>
-            <p style="margin-top: 1rem; color: var(--text-muted);">Welcome to the AuraMed Administration portal. Use the navigation to manage users and approve providers.</p>
-            
-            <div style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                <div class="glass-card" style="padding: 1.5rem;">
-                    <h3 id="patientCount">Loading...</h3>
-                    <p>Total Patients</p>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <div class="nav-item active">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Manage Pending</span>
                 </div>
-                <div class="glass-card" style="padding: 1.5rem;">
-                    <h3 id="doctorCount">Loading...</h3>
-                    <p>Total Doctors</p>
+                <div class="nav-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>View Patients</span>
                 </div>
-                <div class="glass-card" style="padding: 1.5rem;">
-                    <h3 id="pendingApprovals">4</h3>
-                    <p>Pending Approvals</p>
+                <div class="nav-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Messages</span>
+                </div>
+                <div class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="dash-header">
+                <div>
+                    <h1 class="text-gradient" style="margin-bottom: 0.5rem;">System Administration</h1>
+                    <p style="margin-bottom: 0; color: var(--text-muted);">Real-time control and provider verification portal.</p>
+                </div>
+                <div class="glass" style="padding: 0.5rem 1.25rem; border-radius: 999px; font-size: 0.9rem; font-weight: 700; border: 1px solid var(--primary); color: var(--primary);">
+                    <i class="fa-solid fa-shield-halved" style="margin-right: 0.5rem;"></i>
+                    SUPER ADMIN
+                </div>
+            </header>
+
+            <!-- Stats Grid -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3 id="patientCount">...</h3>
+                        <p>Total Patients</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--secondary);"><i class="fa-solid fa-user-doctor"></i></div>
+                    <div class="stat-info">
+                        <h3 id="doctorCount">...</h3>
+                        <p>Approved Docs</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(255, 150, 0, 0.1); color: #f59e0b;"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="stat-info">
+                        <h3 id="pendingApprovals">...</h3>
+                        <p>Pending Apps</p>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Pending Table -->
+            <div class="data-card">
+                <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-clipboard-check" style="color: var(--primary);"></i>
+                    Doctor Approval Queue
+                </h2>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--glass-border); text-align: left;">
+                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Doctor</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Specialization</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Experience</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Documents</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingDoctorsTable">
+                            <tr>
+                                <td colspan="5" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                                    Fetching pending applications...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <script src="js/main.js"></script>
+    <!-- User Verification Scripts -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const userName = localStorage.getItem('userName');
-            const userRole = localStorage.getItem('userRole');
-            if (!userRole || userRole !== 'admin') {
-                window.location.href = 'login.html';
-            }
-            document.getElementById('welcomeMsg').innerText = `Welcome, ${userName}`;
-        });
+        const userRole = localStorage.getItem('userRole');
+        if (!userRole || userRole !== 'admin') {
+            window.location.href = 'login.html';
+        }
     </script>
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

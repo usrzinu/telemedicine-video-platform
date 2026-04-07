@@ -38,33 +38,51 @@ async function fetchDoctors() {
 }
 
 /**
- * Render doctor cards
+ * Render doctor cards with the premium redesign
  */
 function renderDoctors(doctors) {
     const doctorsList = document.getElementById('doctors-list');
     doctorsList.innerHTML = ''; // Clear loading message
 
     doctors.forEach(doc => {
-        const photo = doc.profile_photo || 'https://via.placeholder.com/150?text=Dr.+' + encodeURIComponent(doc.doctor_name);
+        // Ensure image path is root-relative (e.g., /backend/uploads/...)
+        const photoPath = (doc.profile_photo && doc.profile_photo.length > 0) 
+            ? (doc.profile_photo.startsWith('/') ? doc.profile_photo : '/' + doc.profile_photo)
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.doctor_name)}&background=0ea5e9&color=fff&size=128`;
         
         const card = document.createElement('div');
-        card.className = 'feature-card glass-card glass';
-        card.style.textAlign = 'center';
-        card.style.padding = '2rem';
+        card.className = 'doctor-card';
+        card.style.margin = '10px'; // Add some breathing room in the grid
         
         card.innerHTML = `
-            <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 1.5rem; border: 3px solid var(--primary);">
-                <img src="${photo}" alt="${doc.doctor_name}" style="width: 100%; height: 100%; object-fit: cover;">
+            <div class="doctor-card-img-container" style="margin: 0 auto;">
+                <img src="${photoPath}" alt="${doc.doctor_name}" class="doctor-card-img" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(doc.doctor_name)}&background=0ea5e9&color=fff'">
             </div>
-            <h3 style="margin-bottom: 0.5rem;">${doc.doctor_name}</h3>
-            <p style="color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">${doc.specialization}</p>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                <i class="fa-solid fa-graduation-cap"></i> ${doc.qualification}<br>
-                <i class="fa-solid fa-briefcase"></i> ${doc.experience} Years Experience
-            </p>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
-                <span style="font-weight: 700; color: #10b981;">৳${doc.consultation_fee} <span style="font-size: 0.7rem; color: var(--text-muted);">/ visit</span></span>
-                <a href="signup.html" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Book Now</a>
+            
+            <div class="doctor-card-info" style="text-align: center;">
+                <h3 style="margin-bottom: 0.25rem;">Dr. ${doc.doctor_name}</h3>
+                <div class="specialty" style="color: var(--primary); font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">${doc.specialization}</div>
+            </div>
+
+            <div class="doctor-card-stats" style="text-align: left;">
+                <div class="stat-item" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">${doc.qualification}</span>
+                </div>
+                <div class="stat-item" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-briefcase-medical" style="color: var(--primary);"></i>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">${doc.experience} Years Experience</span>
+                </div>
+            </div>
+
+            <div class="doctor-card-footer" style="padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="price-tag">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Consultation Fee</span>
+                    <span style="font-weight: 800; color: #10b981; font-size: 1.25rem;">৳${doc.consultation_fee}</span>
+                </div>
+                <a href="signup.html?role=patient" class="btn btn-primary" style="padding: 0.6rem 1.25rem; font-weight: 700; border-radius: 999px; font-size: 0.85rem;">
+                    Book Now
+                </a>
             </div>
         `;
         
