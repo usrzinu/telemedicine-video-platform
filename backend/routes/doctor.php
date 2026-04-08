@@ -23,6 +23,7 @@ if (strpos($uri, '/api/doctor/apply') !== false) {
         echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
         exit;
     }
+    
     $doctorController->apply($data, $files);
 } else if ($uri === '/api/doctors') {
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') {

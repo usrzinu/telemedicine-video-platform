@@ -20,6 +20,7 @@ if (strpos($uri, '/api/register') !== false) {
         exit;
     }
     
+    
     // Check if it's a FormData request or JSON
     $contentType = isset($_SERVER["CONTENT_TYPE"]) ? $_SERVER["CONTENT_TYPE"] : '';
     if (strpos($contentType, 'multipart/form-data') !== false) {

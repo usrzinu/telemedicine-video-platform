@@ -43,3 +43,4 @@ if (file_exists($file) && !is_dir($file)) {
 // 3. Fallback to 404
 http_response_code(404);
 echo "404 Not Found: " . htmlspecialchars($uri);
+
