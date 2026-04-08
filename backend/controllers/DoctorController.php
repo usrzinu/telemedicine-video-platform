@@ -107,6 +107,7 @@ class DoctorController {
         if (!is_dir($targetDir)) {
             mkdir($targetDir, 0777, true);
         }
+        
 
         $fileName = basename($file["name"]);
         $fileSize = $file["size"];

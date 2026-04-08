@@ -53,6 +53,7 @@ class UserModel {
             return true;
         }
         
+        
         return false;
     }
     // Find a user by ID

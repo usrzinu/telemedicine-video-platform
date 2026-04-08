@@ -15,5 +15,6 @@ CREATE TABLE IF NOT EXISTS doctors (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 -- Ensure only one doctor profile per user
 CREATE UNIQUE INDEX idx_doctor_user_id ON doctors(user_id);

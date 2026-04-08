@@ -107,6 +107,7 @@ class AuthController {
                 if (!$doctorModel->apply($docData)) {
                     throw new Exception("Failed to create doctor profile.");
                 }
+                
 
                 $this->db->commit();
                 echo json_encode([
