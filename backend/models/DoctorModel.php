@@ -68,7 +68,7 @@ class DoctorModel {
      * Get all approved doctors for the landing page
      */
     public function getApprovedDoctors() {
-        $query = "SELECT d.id, d.specialization, d.experience, d.qualification, d.consultation_fee, d.profile_photo, u.name as doctor_name 
+        $query = "SELECT d.id, d.specialization, d.experience, d.qualification, d.consultation_fee, d.profile_photo, u.name as doctor_name, u.email 
                   FROM " . $this->table_name . " d
                   JOIN users u ON d.user_id = u.id
                   WHERE d.status = 'approved'

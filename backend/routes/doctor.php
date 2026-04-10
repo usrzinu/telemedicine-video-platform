@@ -56,6 +56,13 @@ if (strpos($uri, '/api/doctor/apply') !== false) {
         exit;
     }
     $doctorController->getStats();
+} else if (strpos($uri, '/api/admin/patients') !== false) {
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        http_response_code(405);
+        echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
+        exit;
+    }
+    $doctorController->getPatients();
 } else {
     // Fallback error (should normally be caught by index.php)
     http_response_code(404);

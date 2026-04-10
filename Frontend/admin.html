@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - AuraMed</title>
+    <title>Admin Dashboard — AuraMed</title>
+    <meta name="description" content="AuraMed system administration portal for managing doctors and patients.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -12,8 +13,8 @@
     <!-- Top Navbar -->
     <nav class="top-navbar">
         <div class="top-navbar-left">
-            <div class="sidebar-logo" style="margin-bottom: 0;">
-                <i class="fa-solid fa-heart-pulse" style="color: var(--primary);"></i>
+            <div class="sidebar-logo" style="margin-bottom:0;">
+                <i class="fa-solid fa-heart-pulse" style="color:var(--primary);"></i>
                 <span class="text-gradient">AuraMed</span>
             </div>
             <div class="top-nav-btn active" id="overviewBtn">
@@ -22,11 +23,11 @@
             </div>
             <div class="top-nav-btn" id="totalDoctorsBtn">
                 <i class="fa-solid fa-user-doctor"></i>
-                <span>Total Doctors</span>
+                <span>Approved Doctors</span>
             </div>
         </div>
         <div class="top-navbar-right">
-            <div id="welcomeMsg" style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted);">Welcome, Admin</div>
+            <div id="welcomeMsg" style="font-weight:600;font-size:0.9rem;color:var(--text-muted);">Welcome, Admin</div>
             <div id="logoutBtn" class="top-nav-btn sign-out">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>Sign Out</span>
@@ -34,23 +35,39 @@
         </div>
     </nav>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmOverlay">
+        <div class="confirm-dialog">
+            <i id="confirmIcon" class="fa-solid fa-triangle-exclamation"></i>
+            <h3 id="confirmTitle">Are you sure?</h3>
+            <p id="confirmMessage">This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button id="confirmCancelBtn" class="btn btn-outline">Cancel</button>
+                <button id="confirmOkBtn" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
             <nav class="sidebar-nav">
-                <div class="nav-item active">
+                <div class="nav-item active" id="sidebarPending">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>Manage Pending</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="sidebarPatients">
                     <i class="fa-solid fa-users"></i>
                     <span>View Patients</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="sidebarMessages">
                     <i class="fa-solid fa-envelope"></i>
                     <span>Messages</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="sidebarSettings">
                     <i class="fa-solid fa-gear"></i>
                     <span>Settings</span>
                 </div>
@@ -61,18 +78,18 @@
         <main class="main-content">
             <header class="dash-header">
                 <div>
-                    <h1 class="text-gradient" style="margin-bottom: 0.5rem;">System Administration</h1>
-                    <p style="margin-bottom: 0; color: var(--text-muted);">Real-time control and provider verification portal.</p>
+                    <h1 class="text-gradient" style="margin-bottom:0.5rem;">System Administration</h1>
+                    <p style="margin-bottom:0;color:var(--text-muted);">Real-time control and provider verification portal.</p>
                 </div>
-                <div class="glass" style="padding: 0.5rem 1.25rem; border-radius: 999px; font-size: 0.9rem; font-weight: 700; border: 1px solid var(--primary); color: var(--primary);">
-                    <i class="fa-solid fa-shield-halved" style="margin-right: 0.5rem;"></i>
+                <div class="glass" style="padding:0.5rem 1.25rem;border-radius:999px;font-size:0.9rem;font-weight:700;border:1px solid var(--primary);color:var(--primary);">
+                    <i class="fa-solid fa-shield-halved" style="margin-right:0.5rem;"></i>
                     SUPER ADMIN
                 </div>
             </header>
 
             <!-- Stats Grid -->
             <div class="stat-grid">
-                <div class="stat-card">
+                <div class="stat-card" id="statPendingCard" style="cursor:pointer;">
                     <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
                     <div class="stat-info">
                         <h3 id="patientCount">...</h3>
@@ -80,54 +97,32 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--secondary);"><i class="fa-solid fa-user-doctor"></i></div>
+                    <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:var(--secondary);"><i class="fa-solid fa-user-doctor"></i></div>
                     <div class="stat-info">
                         <h3 id="doctorCount">...</h3>
-                        <p>Approved Docs</p>
+                        <p>Approved Doctors</p>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(255, 150, 0, 0.1); color: #f59e0b;"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="stat-card" style="cursor:pointer;" id="statApprovalCard">
+                    <div class="stat-icon" style="background:rgba(255,150,0,0.1);color:#f59e0b;"><i class="fa-solid fa-clock-rotate-left"></i></div>
                     <div class="stat-info">
                         <h3 id="pendingApprovals">...</h3>
-                        <p>Pending Apps</p>
+                        <p>Pending Approvals</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Pending Table -->
-            <div class="data-card">
-                <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fa-solid fa-clipboard-check" style="color: var(--primary);"></i>
-                    Doctor Approval Queue
-                </h2>
-                
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--glass-border); text-align: left;">
-                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Doctor</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Specialization</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Experience</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Documents</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-weight: 600;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pendingDoctorsTable">
-                            <tr>
-                                <td colspan="5" style="padding: 3rem; text-align: center; color: var(--text-muted);">
-                                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                                    Fetching pending applications...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <!-- Dynamic Content Area -->
+            <div class="data-card" id="mainDataCard">
+                <div style="padding:4rem;text-align:center;color:var(--text-muted);">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:2.5rem;margin-bottom:1rem;display:block;"></i>
+                    Loading dashboard...
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- User Verification Scripts -->
+    <!-- Auth Guard -->
     <script>
         const userRole = localStorage.getItem('userRole');
         if (!userRole || userRole !== 'admin') {
@@ -138,4 +133,3 @@
     <script src="js/dashboard.js"></script>
 </body>
 </html>
-

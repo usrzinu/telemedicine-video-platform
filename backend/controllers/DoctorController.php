@@ -258,6 +258,21 @@ class DoctorController {
     }
 
     /**
+     * GET /api/admin/patients
+     */
+    public function getPatients() {
+        try {
+            $patients = $this->userModel->getAllPatients();
+            echo json_encode([
+                "status" => "success",
+                "data" => $patients
+            ]);
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
+    /**
      * Generic JSON response helper
      */
     private function response($status, $message) {
