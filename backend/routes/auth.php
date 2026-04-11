@@ -47,3 +47,4 @@ if (strpos($uri, '/api/register') !== false) {
     echo json_encode(["status" => "error", "message" => "API endpoint not found in Auth Router."]);
 }
 ?>
+
