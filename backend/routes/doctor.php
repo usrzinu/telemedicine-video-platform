@@ -32,37 +32,6 @@ if (strpos($uri, '/api/doctor/apply') !== false) {
         exit;
     }
     $doctorController->getApproved();
-} else if (strpos($uri, '/api/admin/pending') !== false) {
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-        http_response_code(405);
-        echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
-        exit;
-    }
-    $doctorController->getPending();
-} else if (strpos($uri, '/api/admin/update-status') !== false) {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
-        exit;
-    }
-    // For JSON payload
-    $json = json_decode(file_get_contents('php://input'), true);
-    $payload = $json ? $json : $_POST;
-    $doctorController->updateAppStatus($payload);
-} else if (strpos($uri, '/api/admin/stats') !== false) {
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-        http_response_code(405);
-        echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
-        exit;
-    }
-    $doctorController->getStats();
-} else if (strpos($uri, '/api/admin/patients') !== false) {
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-        http_response_code(405);
-        echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
-        exit;
-    }
-    $doctorController->getPatients();
 } else {
     // Fallback error (should normally be caught by index.php)
     http_response_code(404);
