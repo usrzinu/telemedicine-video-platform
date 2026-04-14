@@ -3,15 +3,19 @@
  * Admin Model
  * Wraps DoctorModel functionality for admin-specific queries.
  */
+
+use DoctorModel;
+use UserModel;
+
 class AdminModel {
     private $doctorModel;
     private $userModel;
 
-    public function __construct() {
+    public function __construct($db) {
         require_once __DIR__ . '/DoctorModel.php';
         require_once __DIR__ . '/UserModel.php';
-        $this->doctorModel = new DoctorModel();
-        $this->userModel = new UserModel();
+        $this->doctorModel = new DoctorModel($db);
+        $this->userModel = new UserModel($db);
     }
 
     // Proxy to DoctorModel::getPendingDoctors()
@@ -36,4 +40,3 @@ class AdminModel {
     }
 }
 ?>
-

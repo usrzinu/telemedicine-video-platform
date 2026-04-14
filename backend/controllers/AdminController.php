@@ -6,19 +6,19 @@
  */
 
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/DoctorModel.php';
-require_once __DIR__ . '/../models/UserModel.php';
+require_once __DIR__ . '/../models/AdminModel.php';
+
+use Database;
+use AdminModel;
+use Exception;
 
 class AdminController {
-    private $db;
-    private $doctorModel;
-    private $userModel;
+    private $adminModel;
 
     public function __construct() {
         $database = new Database();
-        $this->db = $database->getConnection();
-        $this->doctorModel = new DoctorModel($this->db);
-        $this->userModel = new UserModel($this->db);
+        $db = $database->getConnection();
+        $this->adminModel = new AdminModel($db);
     }
 
     /**
@@ -26,7 +26,7 @@ class AdminController {
      */
     public function getPending() {
         try {
-            $pending = $this->doctorModel->getPendingDoctors();
+            $pending = $this->adminModel->getPendingDoctors();
             echo json_encode([
                 "status" => "success",
                 "data" => $pending
@@ -52,7 +52,7 @@ class AdminController {
                 return;
             }
 
-            if ($this->doctorModel->updateStatus($data['id'], $data['status'])) {
+            if ($this->adminModel->updateDoctorStatus($data)) {
                 $this->response("success", "Doctor application " . $data['status'] . " successfully.");
             } else {
                 $this->response("error", "Failed to update doctor status.");
@@ -67,7 +67,7 @@ class AdminController {
      */
     public function getStats() {
         try {
-            $stats = $this->doctorModel->getDashboardStats();
+            $stats = $this->adminModel->getDashboardStats();
             echo json_encode([
                 "status" => "success",
                 "data" => $stats
@@ -82,7 +82,7 @@ class AdminController {
      */
     public function getPatients() {
         try {
-            $patients = $this->userModel->getAllPatients();
+            $patients = $this->adminModel->getAllPatients();
             echo json_encode([
                 "status" => "success",
                 "data" => $patients
