@@ -1,0 +1,6 @@
+{
+    "intelephense.diagnostics.undefinedTypes": false,
+    "intelephense.diagnostics.undefinedClassConstants": false,
+    "namespaceResolver.highlightOnSave": false,
+    "namespaceResolver.highlightOnOpen": false
+}

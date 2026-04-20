@@ -14,7 +14,28 @@ if (strpos($uri, '/api/') === 0) {
     exit;
 }
 
-// 2. Serve static files from the Frontend directory
+// 2. Serve static uploaded files directly from backend/uploads
+if (strpos($uri, '/backend/uploads/') === 0) {
+    $file = __DIR__ . $uri;
+    if (file_exists($file) && !is_dir($file)) {
+        // Determine MIME type
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        $mimes = [
+            'png'  => 'image/png',
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif'  => 'image/gif',
+            'pdf'  => 'application/pdf'
+        ];
+        if (isset($mimes[$ext])) {
+            header("Content-Type: " . $mimes[$ext]);
+        }
+        readfile($file);
+        exit;
+    }
+}
+
+// 3. Serve static files from the Frontend directory
 // If the URI is just '/', serve index.html
 if ($uri === '/') {
     $uri = '/index.html';
@@ -40,7 +61,6 @@ if (file_exists($file) && !is_dir($file)) {
     exit;
 }
 
-// 3. Fallback to 404
+// 4. Fallback to 404
 http_response_code(404);
 echo "404 Not Found: " . htmlspecialchars($uri);
-

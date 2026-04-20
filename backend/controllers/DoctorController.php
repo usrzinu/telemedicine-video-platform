@@ -196,66 +196,12 @@ class DoctorController {
             case IMAGETYPE_GIF:  imagegif($dst, $filePath); break;
         }
 
-        imagedestroy($src);
-        imagedestroy($dst);
+        // Free GD image resources (unset instead of deprecated imagedestroy)
+        unset($src);
+        unset($dst);
         return true;
     }
 
-    /**
-     * GET /api/admin/pending
-     */
-    public function getPending() {
-        try {
-            $pending = $this->doctorModel->getPendingDoctors();
-            echo json_encode([
-                "status" => "success",
-                "data" => $pending
-            ]);
-        } catch (Exception $e) {
-            $this->response("error", "Server exception: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * POST /api/admin/update-status
-     */
-    public function updateAppStatus($data) {
-        try {
-            if (empty($data['id']) || empty($data['status'])) {
-                $this->response("error", "Doctor ID and status are required.");
-                return;
-            }
-
-            $allowed = ['approved', 'rejected'];
-            if (!in_array($data['status'], $allowed)) {
-                $this->response("error", "Invalid status. Allowed: " . implode(', ', $allowed));
-                return;
-            }
-
-            if ($this->doctorModel->updateStatus($data['id'], $data['status'])) {
-                $this->response("success", "Doctor application " . $data['status'] . " successfully.");
-            } else {
-                $this->response("error", "Failed to update doctor status.");
-            }
-        } catch (Exception $e) {
-            $this->response("error", "Server exception: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * GET /api/admin/stats
-     */
-    public function getStats() {
-        try {
-            $stats = $this->doctorModel->getDashboardStats();
-            echo json_encode([
-                "status" => "success",
-                "data" => $stats
-            ]);
-        } catch (Exception $e) {
-            $this->response("error", "Server exception: " . $e->getMessage());
-        }
-    }
 
     /**
      * Generic JSON response helper

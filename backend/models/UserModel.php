@@ -68,5 +68,13 @@ class UserModel {
         }
         return false;
     }
+
+    // Get all registered patients for admin
+    public function getAllPatients() {
+        $query = "SELECT id, name, email, created_at FROM " . $this->table_name . " WHERE role = 'patient' ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
