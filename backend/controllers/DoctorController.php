@@ -196,8 +196,9 @@ class DoctorController {
             case IMAGETYPE_GIF:  imagegif($dst, $filePath); break;
         }
 
-        imagedestroy($src);
-        imagedestroy($dst);
+        // Free GD image resources (unset instead of deprecated imagedestroy)
+        unset($src);
+        unset($dst);
         return true;
     }
 

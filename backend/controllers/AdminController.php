@@ -8,17 +8,14 @@
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/AdminModel.php';
 
-use Database;
-use AdminModel;
-use Exception;
 
 class AdminController {
     private $adminModel;
 
     public function __construct() {
-        $database = new Database();
+        $database = new \Database();
         $db = $database->getConnection();
-        $this->adminModel = new AdminModel($db);
+        $this->adminModel = new \AdminModel($db);
     }
 
     /**

@@ -4,8 +4,6 @@
  * Wraps DoctorModel functionality for admin-specific queries.
  */
 
-use DoctorModel;
-use UserModel;
 
 class AdminModel {
     private $doctorModel;
