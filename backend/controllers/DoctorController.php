@@ -203,6 +203,214 @@ class DoctorController {
     }
 
 
+    // =========================================================
+    //  DOCTOR SLOT MANAGEMENT
+    // =========================================================
+
+    /**
+     * POST /api/doctor/slot — Add a new availability slot
+     */
+    public function addSlot() {
+        try {
+            $input = json_decode(file_get_contents("php://input"), true);
+
+            // Validate required fields
+            $required = ['doctor_id', 'date', 'start_time', 'end_time'];
+            foreach ($required as $field) {
+                if (empty($input[$field])) {
+                    $this->response("error", "The field '$field' is required.");
+                    return;
+                }
+            }
+
+            $doctor_id  = $input['doctor_id'];
+            $date       = $input['date'];
+            $start_time = $input['start_time'];
+            $end_time   = $input['end_time'];
+
+            // Validate date format
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                $this->response("error", "Invalid date format. Use YYYY-MM-DD.");
+                return;
+            }
+
+            // Validate time format
+            if (!preg_match('/^\d{2}:\d{2}$/', $start_time) || !preg_match('/^\d{2}:\d{2}$/', $end_time)) {
+                $this->response("error", "Invalid time format. Use HH:MM.");
+                return;
+            }
+
+            // End time must be after start time
+            if ($end_time <= $start_time) {
+                $this->response("error", "End time must be after start time.");
+                return;
+            }
+
+            if ($this->doctorModel->createSlot($doctor_id, $date, $start_time, $end_time)) {
+                $this->response("success", "Slot added successfully.");
+            } else {
+                $this->response("error", "Failed to add slot.");
+            }
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/doctor/slots?doctor_id=X — Get all slots for a doctor
+     */
+    public function getSlots() {
+        try {
+            $doctor_id = $_GET['doctor_id'] ?? null;
+
+            if (empty($doctor_id)) {
+                $this->response("error", "doctor_id is required.");
+                return;
+            }
+
+            $slots = $this->doctorModel->getSlotsByDoctor($doctor_id);
+            echo json_encode([
+                "status" => "success",
+                "data" => $slots
+            ]);
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * DELETE /api/doctor/slot — Remove a slot
+     */
+    public function deleteSlot() {
+        try {
+            $input = json_decode(file_get_contents("php://input"), true);
+
+            if (empty($input['id']) || empty($input['doctor_id'])) {
+                $this->response("error", "Both 'id' and 'doctor_id' are required.");
+                return;
+            }
+
+            if ($this->doctorModel->deleteSlot($input['id'], $input['doctor_id'])) {
+                $this->response("success", "Slot deleted successfully.");
+            } else {
+                $this->response("error", "Slot not found or unauthorized.");
+            }
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/doctor/available-slots?doctor_id=X — Get available slots for booking
+     */
+    public function getAvailableSlots() {
+        try {
+            $doctor_id = $_GET['doctor_id'] ?? null;
+
+            if (empty($doctor_id)) {
+                $this->response("error", "doctor_id is required.");
+                return;
+            }
+
+            $slots = $this->doctorModel->getAvailableSlotsByDoctor($doctor_id);
+            echo json_encode([
+                "status" => "success",
+                "data" => $slots
+            ]);
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * POST /api/doctor/book-slot — Patient books an available slot
+     */
+    public function bookSlot() {
+        try {
+            $input = json_decode(file_get_contents("php://input"), true);
+
+            if (empty($input['slot_id']) || empty($input['patient_id'])) {
+                $this->response("error", "Both 'slot_id' and 'patient_id' are required.");
+                return;
+            }
+
+            if ($this->doctorModel->bookSlot($input['slot_id'], $input['patient_id'])) {
+                $this->response("success", "Appointment booked successfully!");
+            } else {
+                $this->response("error", "Slot is no longer available.");
+            }
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
+
+    /**
+     * GET /api/doctor/appointments?doctor_id=X — Get all appointments
+     */
+    public function getAppointments() {
+        try {
+            $doctor_id = $_GET['doctor_id'] ?? null;
+
+            if (empty($doctor_id)) {
+                $this->response("error", "doctor_id is required.");
+                return;
+            }
+
+            $appointments = $this->doctorModel->getAppointmentsByDoctor($doctor_id);
+            echo json_encode([
+                "status" => "success",
+                "data" => $appointments
+            ]);
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/doctor/patients?doctor_id=X — Get all patients and their appointments
+     */
+    public function getPatients() {
+        try {
+            $doctor_id = $_GET['doctor_id'] ?? null;
+
+            if (empty($doctor_id)) {
+                $this->response("error", "doctor_id is required.");
+                return;
+            }
+
+            $rows = $this->doctorModel->getPatientsByDoctor($doctor_id);
+            
+            // Group by patient
+            $patients = [];
+            foreach ($rows as $row) {
+                $pid = $row['patient_id'];
+                if (!isset($patients[$pid])) {
+                    $patients[$pid] = [
+                        "patient_id" => $pid,
+                        "name" => $row['name'],
+                        "email" => $row['email'],
+                        "appointments" => []
+                    ];
+                }
+                $patients[$pid]['appointments'][] = [
+                    "slot_id" => $row['slot_id'],
+                    "date" => $row['date'],
+                    "start_time" => $row['start_time'],
+                    "end_time" => $row['end_time'],
+                    "status" => $row['status']
+                ];
+            }
+
+            echo json_encode([
+                "status" => "success",
+                "data" => array_values($patients)
+            ]);
+        } catch (Exception $e) {
+            $this->response("error", "Server exception: " . $e->getMessage());
+        }
+    }
+
     /**
      * Generic JSON response helper
      */

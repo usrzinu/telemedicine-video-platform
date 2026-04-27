@@ -92,6 +92,23 @@
                     <p class="text-muted">Loading providers...</p>
                 </div>
             </div>
+
+            <!-- Booking Modal -->
+            <div id="bookingModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
+                <div class="glass" style="width: 100%; max-width: 500px; padding: 2rem; border-radius: 16px; position: relative;">
+                    <i class="fa-solid fa-xmark" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted); font-size: 1.2rem;" onclick="closeBookingModal()"></i>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.4rem;">Book Appointment</h2>
+                    <p id="bookingDoctorName" style="color: var(--text-muted); margin-bottom: 1.5rem;">Select an available slot</p>
+                    
+                    <div id="availableSlotsContainer" style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <p class="text-muted text-center"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading slots...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Container -->
+            <div id="toastContainer" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;"></div>
+
         </main>
     </div>
 

@@ -29,7 +29,7 @@ loadEnv(__DIR__ . '/.env');
 // Allow requests from any origin (CORS) and specify JSON response format.
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Methods: POST, GET, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
 // Handle preflight OPTIONS requests
@@ -56,6 +56,12 @@ switch ($route) {
 
     case '/api/doctor/apply':
     case '/api/doctors':
+    case '/api/doctor/slot':
+    case '/api/doctor/slots':
+    case '/api/doctor/available-slots':
+    case '/api/doctor/book-slot':
+    case '/api/doctor/appointments':
+    case '/api/doctor/patients':
         // Include the doctor route handler
         require_once __DIR__ . '/routes/doctor.php';
         break;
@@ -66,6 +72,11 @@ switch ($route) {
     case '/api/admin/patients':
         // Include the admin route handler
         require_once __DIR__ . '/routes/admin.php';
+        break;
+
+    case '/api/appointment/book':
+        // Include the appointment route handler
+        require_once __DIR__ . '/routes/appointment.php';
         break;
 
     default:

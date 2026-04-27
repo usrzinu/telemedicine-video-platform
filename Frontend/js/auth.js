@@ -196,7 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({
                         email: email,
-                        password: password
+                        password: password,
+                        role: selectedRole
                     })
                 });
 

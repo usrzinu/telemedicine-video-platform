@@ -32,6 +32,30 @@ if (strpos($uri, '/api/doctor/apply') !== false) {
         exit;
     }
     $doctorController->getApproved();
+
+// --- Doctor Slot Management Routes ---
+} else if ($uri === '/api/doctor/slot' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $doctorController->addSlot();
+
+} else if ($uri === '/api/doctor/slots' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $doctorController->getSlots();
+
+} else if ($uri === '/api/doctor/slot' && $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    $doctorController->deleteSlot();
+
+// --- Patient Booking Routes ---
+} else if ($uri === '/api/doctor/available-slots' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $doctorController->getAvailableSlots();
+
+} else if ($uri === '/api/doctor/book-slot' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $doctorController->bookSlot();
+
+} else if ($uri === '/api/doctor/appointments' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $doctorController->getAppointments();
+
+} else if ($uri === '/api/doctor/patients' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $doctorController->getPatients();
+
 } else {
     // Fallback error (should normally be caught by index.php)
     http_response_code(404);

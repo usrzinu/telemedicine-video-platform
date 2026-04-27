@@ -33,11 +33,11 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <nav class="sidebar-nav">
-                <div class="nav-item active">
+                <div class="nav-item active" id="nav-schedule">
                     <i class="fa-solid fa-calendar-days"></i>
                     <span>Schedule</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-patients">
                     <i class="fa-solid fa-hospital-user"></i>
                     <span>My Patients</span>
                 </div>
@@ -65,6 +65,130 @@
                 </div>
             </header>
 
+            <!-- VIEW: APPOINTMENTS & SCHEDULE -->
+            <div id="scheduleViewContainer">
+                <!-- Schedule / Availability Section -->
+                <section id="scheduleSection" class="glass" style="padding: 2rem; border-radius: 16px; margin-top: 1.5rem;">
+                    <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-calendar-plus" style="color: var(--primary);"></i>
+                        Schedule / Availability
+                    </h2>
+
+                <!-- Add Slot Form -->
+                <form id="addSlotForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; align-items: end;">
+                    <div>
+                        <label for="slotDate" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
+                            <i class="fa-regular fa-calendar" style="margin-right: 0.3rem;"></i>Date
+                        </label>
+                        <input type="date" id="slotDate" required
+                               style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border);
+                                      background: var(--surface); color: var(--text-main); font-size: 0.9rem; font-family: inherit;">
+                    </div>
+                    <div>
+                        <label for="slotStart" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
+                            <i class="fa-regular fa-clock" style="margin-right: 0.3rem;"></i>Start Time
+                        </label>
+                        <input type="time" id="slotStart" required
+                               style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border);
+                                      background: var(--surface); color: var(--text-main); font-size: 0.9rem; font-family: inherit;">
+                    </div>
+                    <div>
+                        <label for="slotEnd" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
+                            <i class="fa-regular fa-clock" style="margin-right: 0.3rem;"></i>End Time
+                        </label>
+                        <input type="time" id="slotEnd" required
+                               style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border);
+                                      background: var(--surface); color: var(--text-main); font-size: 0.9rem; font-family: inherit;">
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" id="addSlotBtn"
+                                style="width: 100%; padding: 0.65rem 1.25rem; font-weight: 700; border-radius: 10px; font-size: 0.9rem;">
+                            <i class="fa-solid fa-plus" style="margin-right: 0.4rem;"></i>Add Slot
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Slot List -->
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-list-check" style="color: var(--secondary);"></i>
+                    Your Availability Slots
+                </h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--glass-border); text-align: left;">
+                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Date</th>
+                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Start</th>
+                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">End</th>
+                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Status</th>
+                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="slotTableBody">
+                            <tr><td colspan="5" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
+                                Loading slots...
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Appointment Sections -->
+            <div id="appointmentsContainer" style="margin-top: 2rem;">
+                
+                <!-- Today's Schedule -->
+                <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                    <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-calendar-day" style="color: var(--primary);"></i>
+                        Today's Schedule
+                    </h2>
+                    <div id="todayAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading appointments...</p>
+                    </div>
+                </section>
+
+                <!-- Upcoming Appointments -->
+                <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid var(--secondary);">
+                    <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-calendar-week" style="color: var(--secondary);"></i>
+                        Upcoming Appointments
+                    </h2>
+                    <div id="upcomingAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading appointments...</p>
+                    </div>
+                </section>
+
+                <!-- Completed Appointments -->
+                <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
+                    <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-clipboard-check" style="color: #10b981);"></i>
+                        Completed Appointments
+                    </h2>
+                    <div id="completedAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading appointments...</p>
+                    </div>
+                </section>
+
+            </div>
+            </div> <!-- End scheduleViewContainer -->
+
+            <!-- VIEW: MY PATIENTS -->
+            <div id="patientsViewContainer" style="display: none; margin-top: 1.5rem;">
+                <div class="glass" style="padding: 2rem; border-radius: 16px;">
+                    <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-hospital-user" style="color: var(--primary);"></i>
+                        My Patients Directory
+                    </h2>
+                    
+                    <div id="patientsListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading patients...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Container -->
+            <div id="toastContainer" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;"></div>
 
         </main>
     </div>
