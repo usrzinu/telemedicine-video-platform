@@ -33,17 +33,21 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <nav class="sidebar-nav">
-                <div class="nav-item active">
+                <div class="nav-item active" id="navFindDoctors">
                     <i class="fa-solid fa-user-doctor"></i>
                     <span>Find Doctors</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="navAppointments">
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Appointments</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="navHistory">
                     <i class="fa-solid fa-folder-medical"></i>
                     <span>Medical History</span>
+                </div>
+                <div class="nav-item" id="navSupport">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Support</span>
                 </div>
             </nav>
         </aside>
@@ -61,37 +65,217 @@
                 </div>
             </header>
 
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fa-solid fa-calendar-plus"></i></div>
-                    <div class="stat-info">
-                        <h3>Book</h3>
-                        <p>New Appointment</p>
+            <div id="viewFindDoctors" style="display: block;">
+                <div class="stat-grid">
+                    <div class="stat-card" style="cursor: pointer;" onclick="document.getElementById('navAppointments').click()">
+                        <div class="stat-icon"><i class="fa-solid fa-calendar-plus"></i></div>
+                        <div class="stat-info">
+                            <h3>Book</h3>
+                            <p>New Appointment</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="cursor: pointer;" onclick="document.getElementById('navSupport').click()">
+                        <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--secondary);"><i class="fa-solid fa-comment-medical"></i></div>
+                        <div class="stat-info">
+                            <h3>Contact</h3>
+                            <p>Support Team</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="cursor: pointer;" onclick="document.getElementById('navHistory').click()">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fa-solid fa-vial-circle-check"></i></div>
+                        <div class="stat-info">
+                            <h3>Lab</h3>
+                            <p>Recent Results</p>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--secondary);"><i class="fa-solid fa-comment-medical"></i></div>
-                    <div class="stat-info">
-                        <h3>Contact</h3>
-                        <p>Support Team</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fa-solid fa-vial-circle-check"></i></div>
-                    <div class="stat-info">
-                        <h3>Lab</h3>
-                        <p>Recent Results</p>
+
+                <div class="data-card">
+                    <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-user-md" style="color: var(--primary); margin-right: 0.5rem;"></i> Specialist Directory</h2>
+                    <div id="doctorList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <!-- Doctors will be loaded here -->
+                        <p class="text-muted">Loading providers...</p>
                     </div>
                 </div>
             </div>
 
-            <div class="data-card">
-                <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-user-md" style="color: var(--primary); margin-right: 0.5rem;"></i> Specialist Directory</h2>
-                <div id="doctorList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-                    <!-- Doctors will be loaded here -->
-                    <p class="text-muted">Loading providers...</p>
+            <div id="viewAppointments" style="display: none;">
+                <div class="data-card">
+                    <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-calendar-check" style="color: var(--primary); margin-right: 0.5rem;"></i> My Appointments</h2>
+                    <div id="patientAppointmentsList" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <p class="text-muted text-center" style="padding: 2rem;">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i> Loading appointments...
+                        </p>
+                    </div>
                 </div>
             </div>
+
+            <div id="viewHistory" style="display: none;">
+                <div class="data-card">
+                    <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-folder-medical" style="color: var(--primary); margin-right: 0.5rem;"></i> Medical History</h2>
+                    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                        <i class="fa-solid fa-file-waveform" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        <h3>Coming Soon</h3>
+                        <p>Your medical history records will be accessible here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Modal -->
+            <div id="bookingModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
+                <div class="glass" style="width: 100%; max-width: 500px; padding: 2rem; border-radius: 16px; position: relative;">
+                    <i class="fa-solid fa-xmark" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted); font-size: 1.2rem;" onclick="closeBookingModal()"></i>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.4rem;">Book Appointment</h2>
+                    <p id="bookingDoctorName" style="color: var(--text-muted); margin-bottom: 1.5rem;">Select an available slot</p>
+                    
+                    <div id="availableSlotsContainer" style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <p class="text-muted text-center"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading slots...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Modal -->
+            <div id="paymentModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
+                <div class="glass" style="width: 100%; max-width: 450px; padding: 2rem; border-radius: 16px; position: relative; max-height: 90vh; overflow-y: auto;">
+                    <i class="fa-solid fa-xmark" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted); font-size: 1.2rem;" onclick="closePaymentModal()"></i>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.4rem;">Complete Payment</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Provide payment details for verification.</p>
+                    
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem;">Amount to Pay</div>
+                        <div id="paymentAmountDisplay" style="font-size: 2rem; font-weight: 700; color: var(--primary);">৳0</div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Patient Name</label>
+                        <input type="text" id="payPatientName" readonly style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: var(--text-muted); font-size: 0.9rem;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Email</label>
+                        <input type="email" id="payPatientEmail" readonly style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: var(--text-muted); font-size: 0.9rem;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Doctor Name</label>
+                            <input type="text" id="payDoctorName" readonly style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: var(--text-muted); font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Consultation Time</label>
+                            <input type="text" id="paySlotTime" readonly style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: var(--text-muted); font-size: 0.9rem;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Payment Method</label>
+                        <select id="paymentMethodSelect" onchange="togglePaymentFields()" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem;">
+                            <option value="bkash">bKash</option>
+                            <option value="nagad">Nagad</option>
+                            <option value="card">Credit/Debit Card</option>
+                        </select>
+                    </div>
+
+                    <!-- Mobile Banking Fields -->
+                    <div id="mobileFields" style="display: block;">
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Phone Number</label>
+                            <input type="text" id="payPhoneNumber" placeholder="e.g., 017XXXXX" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem;">
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Transaction ID</label>
+                            <input type="text" id="payTransactionId" placeholder="e.g., 8N7A6BV9" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem;">
+                        </div>
+                    </div>
+
+                    <!-- Card Fields -->
+                    <div id="cardFields" style="display: none;">
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Card Number</label>
+                            <input type="text" id="payCardNumber" placeholder="XXXX XXXX XXXX XXXX" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem;">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Card Holder</label>
+                                <input type="text" id="payCardHolder" placeholder="Name on card" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Expiry Date</label>
+                                <input type="text" id="payCardExpiry" placeholder="MM/YY" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem;">
+                            </div>
+                        </div>
+                    </div>
+                        <button id="payNowBtn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; border-radius: 10px; font-size: 1rem;" onclick="submitPayment()">
+                            <i class="fa-solid fa-lock" style="margin-right: 0.4rem;"></i> Pay Securely Now
+                        </button>
+                    </div>
+                </div>
+            
+            <!-- Support Modal -->
+            <div id="supportModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+                <div class="modal-content glass" style="max-width: 500px; width: 90%; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="margin:0;"><i class="fa-solid fa-headset" style="color: var(--primary); margin-right: 0.5rem;"></i> Contact Support</h2>
+                        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; opacity: 0.6;" onclick="document.getElementById('supportModal').style.display='none'"></i>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Subject</label>
+                        <input type="text" id="supportSubject" placeholder="Briefly describe your issue" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem;">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Message</label>
+                        <textarea id="supportMessage" placeholder="Tell us what you need help with..." rows="5" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem; resize: none;"></textarea>
+                    </div>
+                    
+                    <button class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; border-radius: 10px; font-size: 1rem;" onclick="submitSupportTicket()">
+                        <i class="fa-solid fa-paper-plane" style="margin-right: 0.4rem;"></i> Send Message
+                    </button>
+                </div>
+            </div>
+
+            <!-- Support Tickets View -->
+            <div id="viewSupport" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin:0;"><i class="fa-solid fa-headset" style="color: var(--primary); margin-right: 0.5rem;"></i> Support & Feedback</h2>
+                    <button class="btn btn-primary" onclick="document.getElementById('supportModal').style.display='flex'">
+                        <i class="fa-solid fa-plus" style="margin-right: 0.5rem;"></i> New Ticket
+                    </button>
+                </div>
+                <div class="data-card">
+                    <div id="ticketList" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- Tickets loaded here -->
+                        <p class="text-muted">No tickets found.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversation Modal -->
+            <div id="conversationModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+                <div class="modal-content glass" style="max-width: 600px; width: 95%; height: 80vh; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0;">
+                        <h3 id="convSubject" style="margin:0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ticket Conversation</h3>
+                        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; opacity: 0.6;" onclick="document.getElementById('conversationModal').style.display='none'"></i>
+                    </div>
+                    <div id="convMessages" style="flex-grow: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 1rem;">
+                        <!-- Messages loaded here -->
+                    </div>
+                    <div id="convInputArea" style="display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; margin-bottom: 1rem;">
+                        <textarea id="patientReplyText" placeholder="Type your reply..." rows="2" style="flex-grow: 1; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.9rem; resize: none;"></textarea>
+                        <button class="btn btn-primary" onclick="submitPatientReply()" style="padding: 0.65rem 1rem;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div id="convStatus" style="font-size: 0.85rem; text-align: center; color: var(--text-muted);">
+                        Ticket status: <span id="ticketStatusLabel">...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Container -->
+            <div id="toastContainer" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;"></div>
+
         </main>
     </div>
 

@@ -124,6 +124,7 @@ class AuthController {
                     "message" => "Registration successful.",
                     "id" => $user['id'],
                     "name" => $user['name'],
+                    "email" => $user['email'],
                     "role" => $user['role']
                 ]);
             }
@@ -225,8 +226,8 @@ class AuthController {
     // Process Login
     public function login($data) {
         // Validate inputs
-        if (empty($data->email) || empty($data->password)) {
-            $this->sendResponse("error", "Email and password are required.");
+        if (empty($data->email) || empty($data->password) || empty($data->role)) {
+            $this->sendResponse("error", "Email, password, and role are required.");
             return;
         }
 
@@ -235,6 +236,12 @@ class AuthController {
 
         if (!$user) {
             $this->sendResponse("error", "Invalid credentials.");
+            return;
+        }
+
+        // Check if the requested role matches the user's actual role
+        if ($user['role'] !== $data->role) {
+            $this->sendResponse("error", "Account role mismatch. Please select the correct role.");
             return;
         }
 
@@ -253,6 +260,9 @@ class AuthController {
                 } else if ($doc['status'] === 'rejected') {
                     $this->sendResponse("error", "Your doctor application was rejected. Please contact support.");
                     return;
+                } else if ($doc['status'] === 'banned') {
+                    $this->sendResponse("error", "Account Suspended. Please contact administration.");
+                    return;
                 }
             }
 
@@ -262,6 +272,7 @@ class AuthController {
                 "message" => "Login successful",
                 "id" => $user['id'],
                 "name" => $user['name'],
+                "email" => $user['email'],
                 "role" => $user['role']
             ]);
         } else {
