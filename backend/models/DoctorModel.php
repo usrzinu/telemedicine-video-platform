@@ -112,12 +112,6 @@ class DoctorModel {
      * Get statistics for admin dashboard
      */
     public function getDashboardStats() {
-        // Get total patients
-        $pCountQuery = "SELECT COUNT(*) as count FROM users WHERE role = 'patient'";
-        $pStmt = $this->conn->prepare($pCountQuery);
-        $pStmt->execute();
-        $pCount = $pStmt->fetch(PDO::FETCH_ASSOC)['count'];
-
         // Get total approved doctors
         $dCountQuery = "SELECT COUNT(*) as count FROM " . $this->table_name . " WHERE status = 'approved'";
         $dStmt = $this->conn->prepare($dCountQuery);
@@ -131,7 +125,6 @@ class DoctorModel {
         $pendingCount = $pendingStmt->fetch(PDO::FETCH_ASSOC)['count'];
 
         return [
-            "patients" => $pCount,
             "doctors" => $dCount,
             "pending" => $pendingCount
         ];

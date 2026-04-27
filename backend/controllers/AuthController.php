@@ -124,6 +124,7 @@ class AuthController {
                     "message" => "Registration successful.",
                     "id" => $user['id'],
                     "name" => $user['name'],
+                    "email" => $user['email'],
                     "role" => $user['role']
                 ]);
             }
@@ -259,6 +260,9 @@ class AuthController {
                 } else if ($doc['status'] === 'rejected') {
                     $this->sendResponse("error", "Your doctor application was rejected. Please contact support.");
                     return;
+                } else if ($doc['status'] === 'banned') {
+                    $this->sendResponse("error", "Account Suspended. Please contact administration.");
+                    return;
                 }
             }
 
@@ -268,6 +272,7 @@ class AuthController {
                 "message" => "Login successful",
                 "id" => $user['id'],
                 "name" => $user['name'],
+                "email" => $user['email'],
                 "role" => $user['role']
             ]);
         } else {

@@ -69,23 +69,46 @@ switch ($route) {
     case '/api/admin/pending':
     case '/api/admin/update-status':
     case '/api/admin/stats':
-    case '/api/admin/patients':
+    case '/api/admin/doctors':
         // Include the admin route handler
         require_once __DIR__ . '/routes/admin.php';
         break;
 
+    case '/api/appointment/patient':
     case '/api/appointment/book':
+    case '/api/appointment/requests':
+    case '/api/appointment/update-status':
         // Include the appointment route handler
         require_once __DIR__ . '/routes/appointment.php';
         break;
 
+    case '/api/payment/pay':
+    case '/api/payment/doctor-requests':
+    case '/api/payment/verify-doctor':
+        // Include the payment route handler
+        require_once __DIR__ . '/routes/payment.php';
+        break;
+
+    case '/api/support/create':
+    case '/api/support/my-tickets':
+    case '/api/support/reply':
+    case '/api/admin/support/tickets':
+    case '/api/admin/support/reply':
+        require_once __DIR__ . '/routes/support.php';
+        break;
+
     default:
-        // Return 404 if the route isn't found
-        http_response_code(404);
-        echo json_encode([
-            "status" => "error", 
-            "message" => "Endpoint not found: " . $route
-        ]);
+        // Handle dynamic routes like /api/support/ticket/{id}
+        if (strpos($route, '/api/support/ticket/') !== false) {
+            require_once __DIR__ . '/routes/support.php';
+        } else {
+            // Return 404 if the route isn't found
+            http_response_code(404);
+            echo json_encode([
+                "status" => "error", 
+                "message" => "Endpoint not found: " . $route
+            ]);
+        }
         break;
 }
 ?>

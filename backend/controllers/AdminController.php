@@ -43,9 +43,9 @@ class AdminController {
                 return;
             }
 
-            $allowed = ['approved', 'rejected'];
+            $allowed = ['approved', 'rejected', 'banned'];
             if (!in_array($data['status'], $allowed)) {
-                $this->response("error", "Invalid status. Allowed: " . implode(', ', $allowed));
+                $this->response("error", "Invalid status. Allowed: approved, rejected, banned");
                 return;
             }
 
@@ -75,14 +75,14 @@ class AdminController {
     }
 
     /**
-     * GET /api/admin/patients
+     * GET /api/admin/doctors
      */
-    public function getPatients() {
+    public function getAllDoctors() {
         try {
-            $patients = $this->adminModel->getAllPatients();
+            $doctors = $this->adminModel->getAllDoctors();
             echo json_encode([
                 "status" => "success",
-                "data" => $patients
+                "data" => $doctors
             ]);
         } catch (Exception $e) {
             $this->response("error", "Server exception: " . $e->getMessage());

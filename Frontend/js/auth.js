@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Auto-login for Patients/Admins
                         localStorage.setItem('userId', result.id);
                         localStorage.setItem('userName', result.name);
+                        localStorage.setItem('userEmail', result.email);
                         localStorage.setItem('userRole', result.role);
 
                         showNotification('success', 'Registration successful! Redirecting to your dashboard...');
@@ -206,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.status === 'success') {
                     localStorage.setItem('userId', result.id);
                     localStorage.setItem('userName', result.name);
+                    localStorage.setItem('userEmail', result.email);
                     localStorage.setItem('userRole', result.role);
 
                     const redirectMap = {
@@ -225,4 +227,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 

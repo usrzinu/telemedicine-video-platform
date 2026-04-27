@@ -228,6 +228,13 @@ class DoctorController {
             $start_time = $input['start_time'];
             $end_time   = $input['end_time'];
 
+            // Check if doctor is banned
+            $doc = $this->doctorModel->getByUserId($doctor_id);
+            if (!$doc || $doc['status'] === 'banned') {
+                $this->response("error", "Your account is suspended. You cannot add new slots.");
+                return;
+            }
+
             // Validate date format
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                 $this->response("error", "Invalid date format. Use YYYY-MM-DD.");

@@ -33,6 +33,10 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <nav class="sidebar-nav">
+                <div class="nav-item" id="nav-requests">
+                    <i class="fa-solid fa-inbox"></i>
+                    <span>Incoming Requests</span>
+                </div>
                 <div class="nav-item active" id="nav-schedule">
                     <i class="fa-solid fa-calendar-days"></i>
                     <span>Schedule</span>
@@ -41,9 +45,9 @@
                     <i class="fa-solid fa-hospital-user"></i>
                     <span>My Patients</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-payments">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
-                    <span>E-Prescriptions</span>
+                    <span>Payment Requests</span>
                 </div>
                 <div class="nav-item">
                     <i class="fa-solid fa-user-gear"></i>
@@ -64,6 +68,32 @@
                     Medical Provider
                 </div>
             </header>
+
+            <!-- VIEW: INCOMING REQUESTS -->
+            <div id="requestsViewContainer" style="display: none; margin-top: 1.5rem;">
+                <section class="glass" style="padding: 2rem; border-radius: 16px; border-left: 4px solid #f59e0b;">
+                    <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-inbox" style="color: #f59e0b;"></i>
+                        Incoming Booking Requests
+                    </h2>
+                    <div id="incomingRequestsList">
+                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading requests...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- VIEW: PAYMENT REQUESTS -->
+            <div id="paymentsViewContainer" style="display: none; margin-top: 1.5rem;">
+                <section class="glass" style="padding: 2rem; border-radius: 16px; border-left: 4px solid #10b981;">
+                    <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-file-invoice-dollar" style="color: #10b981;"></i>
+                        Pending Payment Verifications
+                    </h2>
+                    <div id="pendingPaymentsList">
+                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading payments...</p>
+                    </div>
+                </section>
+            </div>
 
             <!-- VIEW: APPOINTMENTS & SCHEDULE -->
             <div id="scheduleViewContainer">
@@ -162,7 +192,7 @@
                 <!-- Completed Appointments -->
                 <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
                     <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-clipboard-check" style="color: #10b981);"></i>
+                        <i class="fa-solid fa-clipboard-check" style="color: #10b981;"></i>
                         Completed Appointments
                     </h2>
                     <div id="completedAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
