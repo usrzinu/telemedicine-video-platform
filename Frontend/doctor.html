@@ -41,6 +41,10 @@
                     <i class="fa-solid fa-calendar-days"></i>
                     <span>Schedule</span>
                 </div>
+                <div class="nav-item" id="nav-consultations">
+                    <i class="fa-solid fa-video"></i>
+                    <span>Consultations</span>
+                </div>
                 <div class="nav-item" id="nav-patients">
                     <i class="fa-solid fa-hospital-user"></i>
                     <span>My Patients</span>
@@ -68,6 +72,12 @@
                     Medical Provider
                 </div>
             </header>
+
+            <!-- Video Consultations View -->
+            <div id="consultationsViewContainer" style="display: none; margin-top: 1.5rem;">
+                <!-- Active Video Sessions Control (Managed by doctor.js) -->
+                <div id="activeDoctorSessionsList" style="margin-bottom: 2rem;"></div>
+            </div>
 
             <!-- VIEW: INCOMING REQUESTS -->
             <div id="requestsViewContainer" style="display: none; margin-top: 1.5rem;">
@@ -232,6 +242,7 @@
     </script>
     <script src="js/main.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/doctor.js"></script>
 </body>
 </html>
 

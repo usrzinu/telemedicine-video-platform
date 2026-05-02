@@ -214,11 +214,14 @@ class DoctorModel {
      * Get all appointments (booked slots) for a doctor
      */
     public function getAppointmentsByDoctor($doctor_id) {
-        $query = "SELECT s.id, s.date, s.start_time, s.end_time, s.status, u.name as patient_name
-                  FROM doctor_slots s
-                  JOIN users u ON s.patient_id = u.id
-                  WHERE s.doctor_id = :doctor_id AND s.patient_id IS NOT NULL
-                  ORDER BY s.date ASC, s.start_time ASC";
+        $query = "SELECT a.id, a.status, a.consultation_status, a.queue_position,
+                         s.id as slot_id, s.date, s.start_time, s.end_time, 
+                         u.name as patient_name
+                  FROM appointments a
+                  JOIN doctor_slots s ON a.slot_id = s.id
+                  JOIN users u ON a.patient_id = u.id
+                  WHERE a.doctor_id = :doctor_id
+                  ORDER BY s.date ASC, s.start_time ASC, a.queue_position ASC";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':doctor_id', $doctor_id);
