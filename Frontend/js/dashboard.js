@@ -1196,7 +1196,11 @@ function switchDoctorView(viewName) {
     } else if (viewName === 'patients') {
         navPatients?.classList.add('active');
         if (viewPatients) viewPatients.style.display = 'block';
-        loadMyPatients();
+        if (typeof loadMyPatientsDirectory === 'function') {
+            loadMyPatientsDirectory();
+        } else {
+            loadMyPatients();
+        }
     } else if (viewName === 'payments') {
         navPayments?.classList.add('active');
         if (viewPayments) viewPayments.style.display = 'block';

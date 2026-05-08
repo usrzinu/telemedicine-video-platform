@@ -31,10 +31,10 @@ class UserModel {
     }
 
     // Create a new user
-    public function createUser($name, $email, $password, $role) {
+    public function createUser($name, $email, $password, $role, $age = null, $gender = null, $blood_group = null) {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (name, email, password, role) 
-                  VALUES (:name, :email, :password, :role)";
+                  (name, email, password, role, age, gender, blood_group) 
+                  VALUES (:name, :email, :password, :role, :age, :gender, :blood_group)";
                   
         $stmt = $this->conn->prepare($query);
         
@@ -42,17 +42,22 @@ class UserModel {
         $name = htmlspecialchars(strip_tags($name));
         $email = htmlspecialchars(strip_tags($email));
         $role = htmlspecialchars(strip_tags($role));
+        $age = !empty($age) ? intval($age) : null;
+        $gender = !empty($gender) ? htmlspecialchars(strip_tags($gender)) : null;
+        $blood_group = !empty($blood_group) ? htmlspecialchars(strip_tags($blood_group)) : null;
         
         // Bind values
         $stmt->bindParam(":name", $name);
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":password", $password); // Password should already be hashed
         $stmt->bindParam(":role", $role);
+        $stmt->bindParam(":age", $age);
+        $stmt->bindParam(":gender", $gender);
+        $stmt->bindParam(":blood_group", $blood_group);
         
         if ($stmt->execute()) {
             return true;
         }
-        
         
         return false;
     }

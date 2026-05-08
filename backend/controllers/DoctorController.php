@@ -397,10 +397,14 @@ class DoctorController {
                         "patient_id" => $pid,
                         "name" => $row['name'],
                         "email" => $row['email'],
+                        "age" => $row['age'],
+                        "gender" => $row['gender'],
+                        "blood_group" => $row['blood_group'],
                         "appointments" => []
                     ];
                 }
                 $patients[$pid]['appointments'][] = [
+                    "appointment_id" => $row['appointment_id'],
                     "slot_id" => $row['slot_id'],
                     "date" => $row['date'],
                     "start_time" => $row['start_time'],

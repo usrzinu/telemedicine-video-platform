@@ -14,12 +14,13 @@ $slot_id = isset($_GET['slot_id']) ? $_GET['slot_id'] : null;
 if (!empty($slot_id) && is_numeric($slot_id)) {
     try {
         // Get list of patients for this slot_id with their queue_position and consultation_status
-        $query = "SELECT a.id as booking_id, a.queue_position as queue_serial, a.consultation_status, u.name as patient_name 
+        $query = "SELECT a.id as booking_id, a.patient_id, a.queue_position as queue_serial, a.consultation_status, 
+                         u.name as patient_name, u.age, u.gender, u.blood_group, s.date 
                   FROM appointments a
                   JOIN users u ON a.patient_id = u.id
+                  JOIN doctor_slots s ON a.slot_id = s.id
                   WHERE a.slot_id = :slot_id 
-                  AND a.queue_position IS NOT NULL
-                  ORDER BY a.queue_position ASC";
+                  ORDER BY a.queue_position ASC NULLS LAST, a.id ASC";
         
         $stmt = $db->prepare($query);
         $stmt->bindParam(":slot_id", $slot_id, PDO::PARAM_INT);

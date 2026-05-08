@@ -63,7 +63,11 @@ class AuthController {
 
         try {
             // Create user
-            if (!$this->userModel->createUser($data->name, $data->email, $hashedPassword, $data->role)) {
+            $age = isset($data->age) ? $data->age : null;
+            $gender = isset($data->gender) ? $data->gender : null;
+            $blood_group = isset($data->blood_group) ? $data->blood_group : null;
+
+            if (!$this->userModel->createUser($data->name, $data->email, $hashedPassword, $data->role, $age, $gender, $blood_group)) {
                 throw new Exception("Failed to create user account.");
             }
 

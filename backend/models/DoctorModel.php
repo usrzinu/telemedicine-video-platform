@@ -233,10 +233,12 @@ class DoctorModel {
      * Get all unique patients that have booked a slot with a specific doctor, along with their appointment history
      */
     public function getPatientsByDoctor($doctor_id) {
-        $query = "SELECT u.id as patient_id, u.name, u.email,
-                         s.date, s.start_time, s.end_time, s.status, s.id as slot_id
+        $query = "SELECT u.id as patient_id, u.name, u.email, u.age, u.gender, u.blood_group,
+                         s.date, s.start_time, s.end_time, s.status, s.id as slot_id,
+                         a.id as appointment_id
                   FROM doctor_slots s
                   JOIN users u ON s.patient_id = u.id
+                  LEFT JOIN appointments a ON s.id = a.slot_id
                   WHERE s.doctor_id = :doctor_id AND s.patient_id IS NOT NULL
                   ORDER BY u.name ASC, s.date DESC, s.start_time DESC";
 

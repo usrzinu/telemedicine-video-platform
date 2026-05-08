@@ -14,14 +14,53 @@
 
 const DOC_BASE = window.location.origin;
 let docSessionPollInterval = null;
+window.patientCache = {}; // Global registry for all patients across all slots
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const userRole = localStorage.getItem('userRole');
-    if (userRole === 'doctor') {
-        loadDoctorConsultationView();
-        docSessionPollInterval = setInterval(loadDoctorConsultationView, 10000);
+    if (!userRole || userRole !== 'doctor') {
+        window.location.href = 'login.html';
+        return;
     }
+    
+    loadDoctorConsultationView();
+    checkDoctorSubscription();
+    docSessionPollInterval = setInterval(loadDoctorConsultationView, 10000);
 });
+
+async function checkDoctorSubscription() {
+    const doctorId = localStorage.getItem('userId');
+    const badge = document.getElementById('subscriptionBadge');
+    const planText = document.getElementById('subPlanText');
+    
+    if (!doctorId || !badge) return;
+    
+    try {
+        const response = await fetch(`${DOC_BASE}/api/doctor/manage_subscription.php?doctor_id=${doctorId}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const sub = result.data;
+            badge.style.display = 'flex';
+            planText.innerText = sub.plan_name;
+            
+            if (sub.is_expired) {
+                badge.style.background = 'rgba(239, 68, 68, 0.1)';
+                badge.style.borderColor = '#ef4444';
+                planText.style.color = '#ef4444';
+                planText.innerText += ' (Expired)';
+            } else {
+                badge.style.background = 'rgba(16, 185, 129, 0.1)';
+                badge.style.borderColor = '#10b981';
+                planText.style.color = '#10b981';
+            }
+        }
+    } catch (e) {
+        console.error("Error checking subscription:", e);
+    }
+}
 
 /* =========================================================
    MAIN: Build the Consultations View
@@ -160,6 +199,9 @@ async function renderSlotCard(doctorId, slot, isLive, activeSession) {
 
         if (queueData.success && queueData.data && queueData.data.queue && queueData.data.queue.length > 0) {
             const queue = queueData.data.queue;
+            // Register patients in global cache
+            queue.forEach(p => window.patientCache[p.booking_id] = p);
+            
             queueHtml = `
             <div style="margin-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem;">
                 <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
@@ -232,15 +274,20 @@ function renderQueueRow(patient) {
     <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-radius: 10px; background: ${rowBg}; border: ${rowBorder}; transition: background 0.2s;">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
             <div style="width: 32px; height: 32px; border-radius: 50%; background: ${statusColor}20; color: ${statusColor}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
-                #${patient.queue_serial}
+                #${patient.queue_serial || '—'}
             </div>
             <div>
                 <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">${patient.patient_name || 'Patient'}</div>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid ${statusIcon}" style="color: ${statusColor}; font-size: 0.8rem;${isActive ? ' animation: pulse-dot 1.5s infinite;' : ''}"></i>
-            <span style="font-size: 0.8rem; font-weight: 600; color: ${statusColor};">${statusText}</span>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid ${statusIcon}" style="color: ${statusColor}; font-size: 0.8rem;${isActive ? ' animation: pulse-dot 1.5s infinite;' : ''}"></i>
+                <span style="font-size: 0.8rem; font-weight: 600; color: ${statusColor};">${statusText}</span>
+            </div>
+            <button onclick="openWorkspace(${patient.booking_id})" class="btn btn-outline" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border-radius: 6px; border-color: var(--primary); color: var(--primary);">
+                <i class="fa-solid fa-briefcase-medical"></i> Workspace
+            </button>
         </div>
     </div>`;
 }
@@ -356,6 +403,395 @@ function formatSlotDate(dateStr) {
 }
 
 /* =========================================================
+   WORKSPACE LOGIC
+   ========================================================= */
+
+let currentWsBookingId = null;
+let currentConsultationId = null;
+let currentPatientId = null;
+let currentPrescriptionId = null;
+
+function openWorkspace(bookingId) {
+    // Find patient data from global registry
+    const patient = window.patientCache[bookingId];
+    if (!patient) {
+        console.error("Patient not found in global cache for booking:", bookingId);
+        return;
+    }
+
+    const { patient_name, date, patient_id, queue_serial, age, gender, blood_group } = patient;
+    
+    currentWsBookingId = bookingId;
+    currentPatientId = patient_id;
+    currentConsultationId = null; // Reset
+    
+    // Header & Identity
+    document.getElementById('wsPatientName').innerText = `Consultation: ${patient_name}`;
+    document.getElementById('wsPatientNameSheet').innerText = patient_name;
+    
+    // Populating ReadOnly Patient Data
+    document.getElementById('wsAge').innerText = age ? `${age} Years` : 'N/A';
+    document.getElementById('wsGender').innerText = gender || 'N/A';
+    document.getElementById('wsBloodGroup').innerText = blood_group || 'N/A';
+    
+    // Prescription Sheet ReadOnly
+    document.getElementById('wsAgeGenderSheet').innerText = `${age || 'N/A'} / ${gender || 'N/A'}`;
+    document.getElementById('wsBloodGroupSheet').innerText = blood_group || 'N/A';
+    
+    const formattedDate = formatDate(date);
+    document.getElementById('wsDate').innerText = formattedDate;
+    document.getElementById('wsDateSheet').innerText = formattedDate;
+    
+    // Header info bar
+    document.getElementById('wsConsultationHeaderInfo').innerHTML = `
+        <span><i class="fa-solid fa-hashtag"></i> ID: ${bookingId}</span>
+        <span><i class="fa-solid fa-calendar-day"></i> ${formattedDate}</span>
+        <span><i class="fa-solid fa-clock"></i> Scheduled (Queue #${queue_serial || '—'})</span>
+    `;
+
+    // Populate Doctor Info on Sheet
+    const welcomeMsg = document.getElementById('welcomeMsg')?.innerText || 'Dr. AuraMed User';
+    document.getElementById('wsDoctorNameSheet').innerText = welcomeMsg.replace('Welcome, ', '');
+    
+    document.getElementById('consultationWorkspaceModal').style.display = 'flex';
+    
+    // Reset forms & Vitals
+    document.getElementById('wsSymptoms').value = '';
+    document.getElementById('wsDiagnosis').value = '';
+    document.getElementById('wsAdvice').value = '';
+    document.getElementById('wsWeight').value = '';
+    document.getElementById('wsBP').value = '';
+    document.getElementById('wsTemp').value = '';
+    document.getElementById('wsOxygen').value = '';
+    document.getElementById('wsVitalsSheet').innerText = '—';
+    
+    // Default Tab
+    switchWsTabNew('notes');
+    
+    // Load dynamic data
+    loadPatientReports(bookingId);
+
+    // ADD LIVE LISTENERS FOR VITALS SYNC
+    const updateVitalsSheet = () => {
+        const w = document.getElementById('wsWeight').value.trim() || '—';
+        const b = document.getElementById('wsBP').value.trim() || '—';
+        const t = document.getElementById('wsTemp').value.trim() || '—';
+        const o = document.getElementById('wsOxygen').value.trim() || '—';
+        document.getElementById('wsVitalsSheet').innerText = `${w}kg / ${b} / ${t}°F / ${o}%`;
+    };
+
+    ['wsWeight', 'wsBP', 'wsTemp', 'wsOxygen'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.removeEventListener('input', updateVitalsSheet); // Avoid duplicates
+            el.addEventListener('input', updateVitalsSheet);
+        }
+    });
+    
+    // Initial sync to clear previous data
+    updateVitalsSheet();
+}
+
+function closeWorkspace() {
+    document.getElementById('consultationWorkspaceModal').style.display = 'none';
+}
+
+function switchWsTabNew(tabName) {
+    const isNotes = tabName === 'notes';
+    
+    // Update buttons
+    document.getElementById('tabNotes').classList.toggle('active', isNotes);
+    document.getElementById('tabPrescription').classList.toggle('active', !isNotes);
+    
+    // Update containers
+    document.getElementById('wsNotesContainer').style.display = isNotes ? 'block' : 'none';
+    document.getElementById('wsPrescriptionContainer').style.display = isNotes ? 'none' : 'block';
+    
+    if (!isNotes && !currentConsultationId) {
+        // Automatically render the form if switching to Rx
+        document.getElementById('wsPrescriptionFormPlaceholder').innerHTML = renderPrescriptionForm();
+    }
+}
+
+async function loadPatientReports(bookingId) {
+    const list = document.getElementById('wsReportsList');
+    list.innerHTML = '<p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading reports...</p>';
+    
+    try {
+        const response = await fetch(`${DOC_BASE}/api/get_reports.php?booking_id=${bookingId}`);
+        const result = await response.json();
+        
+        if (result.success && result.data && result.data.reports && result.data.reports.length > 0) {
+            let html = '';
+            result.data.reports.forEach(rpt => {
+                const isImg = rpt.file_path.match(/\.(jpg|jpeg|png)$/i);
+                html += `
+                <div class="glass" style="padding: 1.25rem; border-radius: 12px; background: rgba(255,255,255,0.03);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fa-solid ${isImg ? 'fa-file-image' : 'fa-file-pdf'}" style="color: ${isImg ? '#3b82f6' : '#ef4444'}; font-size: 1.2rem;"></i>
+                            <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">${rpt.original_name}</div>
+                        </div>
+                        <a href="${DOC_BASE}/${rpt.file_path}" target="_blank" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                            <i class="fa-solid fa-eye"></i> View
+                        </a>
+                    </div>
+                    ${isImg ? `<img src="${DOC_BASE}/${rpt.file_path}" style="width: 100%; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open(this.src, '_blank')">` : 
+                    `<div style="padding: 1rem; text-align: center; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 0.85rem; color: var(--text-muted);">PDF Document</div>`}
+                </div>`;
+            });
+            list.innerHTML = html;
+        } else {
+            list.innerHTML = `
+            <div style="text-align: center; padding: 2rem; opacity: 0.5;">
+                <i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                <p>No reports uploaded yet.</p>
+            </div>`;
+        }
+    } catch (e) {
+        list.innerHTML = '<p class="text-muted">Error loading reports.</p>';
+    }
+}
+
+async function saveConsultationNotes() {
+    const symptoms = document.getElementById('wsSymptoms').value.trim();
+    const diagnosis = document.getElementById('wsDiagnosis').value.trim();
+    const advice = document.getElementById('wsAdvice').value.trim();
+    
+    if (!diagnosis) {
+        showToast("Please enter a diagnosis at least.", "error");
+        return;
+    }
+    
+    const weight = document.getElementById('wsWeight').value.trim();
+    const bp = document.getElementById('wsBP').value.trim();
+    const temp = document.getElementById('wsTemp').value.trim();
+    const oxygen = document.getElementById('wsOxygen').value.trim();
+
+    // Update Prescription Sheet Live
+    document.getElementById('wsVitalsSheet').innerText = `${weight || '—'}kg / ${bp || '—'} / ${temp || '—'}°F / ${oxygen || '—'}%`;
+
+    const btn = document.querySelector('button[onclick="saveConsultationNotes()"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+    
+    try {
+        const response = await fetch(`${DOC_BASE}/api/save_consultation_notes.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                booking_id: currentWsBookingId,
+                doctor_id: localStorage.getItem('userId'),
+                symptoms,
+                diagnosis,
+                advice,
+                weight,
+                blood_pressure: bp,
+                temperature: temp,
+                oxygen_level: oxygen
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast("Consultation notes saved successfully!", "success");
+            currentConsultationId = result.record_id;
+            // Enable prescription tab and switch
+            document.getElementById('wsPrescriptionFormPlaceholder').innerHTML = renderPrescriptionForm();
+            switchWsTabNew('prescription');
+        } else {
+            showToast(result.message || "Failed to save notes.", "error");
+        }
+    } catch (e) {
+        showToast("Network error while saving notes.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+function renderPrescriptionForm() {
+    return `
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Medication Details</h3>
+            <button class="btn btn-outline" onclick="addMedicineRow()" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-color: #3b82f6; color: #3b82f6;">
+                <i class="fa-solid fa-plus"></i> Add Medicine
+            </button>
+        </div>
+        
+        <table class="med-table">
+            <thead>
+                <tr>
+                    <th style="width: 30%;">Medicine Name</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Duration</th>
+                    <th>Instructions</th>
+                    <th style="width: 50px;"></th>
+                </tr>
+            </thead>
+            <tbody id="medicineRowsContainer">
+                ${addMedicineRow(true)} 
+            </tbody>
+        </table>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; padding: 2rem; border-top: 1px dashed #e2e8f0;">
+            <button class="btn btn-primary" onclick="savePrescription()" style="padding: 1rem 3rem; border-radius: 12px; background: #10b981; border-color: #10b981; font-weight: 800; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);">
+                <i class="fa-solid fa-file-signature" style="margin-right: 0.5rem;"></i> Finalize & Generate Prescription
+            </button>
+        </div>
+    </div>`;
+}
+
+function addMedicineRow(returnHtml = false) {
+    const rowHtml = `
+    <tr class="med-row medicine-row">
+        <td>
+            <input type="text" class="med-input med-name" placeholder="e.g. Napa Extra 500mg">
+        </td>
+        <td>
+            <input type="text" class="med-input med-dosage" placeholder="1 Tab">
+        </td>
+        <td>
+            <input type="text" class="med-input med-frequency" placeholder="1+0+1">
+        </td>
+        <td>
+            <input type="text" class="med-input med-duration" placeholder="5 days">
+        </td>
+        <td>
+            <input type="text" class="med-input med-instructions" placeholder="After meal">
+        </td>
+        <td>
+            <button class="med-remove-btn" onclick="this.closest('tr').remove()">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </td>
+    </tr>`;
+    
+    if (returnHtml) return rowHtml;
+    
+    const container = document.getElementById('medicineRowsContainer');
+    const tr = document.createElement('tr');
+    tr.className = 'med-row medicine-row';
+    tr.innerHTML = rowHtml; // Note: rowHtml has the <tr> tags inside, so we need to adjust
+    
+    // Better way:
+    const tempTable = document.createElement('table');
+    tempTable.innerHTML = rowHtml;
+    container.appendChild(tempTable.querySelector('tr'));
+}
+
+async function savePrescription() {
+    if (!currentConsultationId) {
+        showToast("Please save consultation notes first.", "warning");
+        switchWsTabNew('notes');
+        return;
+    }
+
+    const medicines = [];
+    document.querySelectorAll('.medicine-row').forEach(row => {
+        const name = row.querySelector('.med-name').value.trim();
+        if (name) {
+            medicines.push({
+                name,
+                dosage: row.querySelector('.med-dosage').value.trim(),
+                frequency: row.querySelector('.med-frequency').value.trim(),
+                duration: row.querySelector('.med-duration').value.trim(),
+                instructions: row.querySelector('.med-instructions').value.trim()
+            });
+        }
+    });
+
+    if (medicines.length === 0) {
+        showToast("Please add at least one medicine.", "error");
+        return;
+    }
+
+    const btn = document.querySelector('button[onclick="savePrescription()"]');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating...';
+
+    try {
+        const response = await fetch(`${DOC_BASE}/api/create_prescription.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                consultation_id: currentConsultationId,
+                booking_id: currentWsBookingId,
+                doctor_id: localStorage.getItem('userId'),
+                medicines
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast("Prescription generated successfully!", "success");
+            currentPrescriptionId = result.prescription_id;
+            // Open PDF in new tab
+            window.open(`${DOC_BASE}/api/generate_prescription_pdf.php?prescription_id=${result.prescription_id}`, '_blank');
+        } else {
+            showToast(result.message || "Failed to create prescription.", "error");
+        }
+    } catch (e) {
+        showToast("Network error while creating prescription.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-file-signature"></i> Finalize & Generate Prescription';
+    }
+}
+
+function printPrescription() {
+    if (!currentPrescriptionId) {
+        showToast("Please generate a prescription first.", "warning");
+        return;
+    }
+    window.open(`${DOC_BASE}/api/generate_prescription_pdf.php?prescription_id=${currentPrescriptionId}`, '_blank');
+}
+
+
+function confirmEndSession() {
+    if (confirm("Are you sure you want to end this consultation? Make sure you have saved your notes and generated the prescription.")) {
+        // Need session_id to end session via API
+        // For now, close workspace and use the main End Session button
+        closeWorkspace();
+        showToast("Please use the 'End Session' button on the Control Panel to finalize.", "info");
+    }
+}
+
+function showToast(message, type = "success") {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'glass toast-animation';
+    toast.style.cssText = `
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        background: ${type === 'success' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)'};
+        color: white;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        pointer-events: auto;
+    `;
+
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+    toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/* =========================================================
    INJECT: Pulse animation CSS
    ========================================================= */
 (function injectDoctorStyles() {
@@ -422,3 +858,121 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+/* =========================================================
+   PHASE 5: Patients Directory (Search, Filter, Export)
+   ========================================================= */
+let allPatientsData = [];
+
+async function loadMyPatientsDirectory() {
+    const doctorId = localStorage.getItem('userId');
+    const container = document.getElementById('patientsListContainer');
+    if (!container || !doctorId) return;
+
+    container.innerHTML = '<p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Initializing directory...</p>';
+
+    try {
+        const response = await fetch(`${DOC_BASE}/api/doctor/patients?doctor_id=${doctorId}`);
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            allPatientsData = result.data;
+            renderPatientsDirectory(allPatientsData);
+        } else {
+            container.innerHTML = '<p class="text-muted">No patient data available.</p>';
+        }
+    } catch (e) {
+        container.innerHTML = '<p class="text-muted">Error loading directory.</p>';
+    }
+}
+
+function renderPatientsDirectory(patients) {
+    const container = document.getElementById('patientsListContainer');
+    if (patients.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="grid-column: 1/-1; text-align: center; padding: 3rem;">No patients matching your criteria.</p>';
+        return;
+    }
+
+    container.innerHTML = patients.map(p => {
+        // Register the most recent appointment in the cache for the workspace
+        if (p.appointments && p.appointments[0]) {
+            const latestApp = p.appointments[0];
+            window.patientCache[latestApp.appointment_id] = {
+                booking_id: latestApp.appointment_id,
+                patient_name: p.name,
+                patient_id: p.patient_id,
+                date: latestApp.date,
+                age: p.age,
+                gender: p.gender,
+                blood_group: p.blood_group,
+                queue_serial: null
+            };
+        }
+
+        const latestBookingId = p.appointments[0]?.appointment_id || 0;
+
+        return `
+        <div class="glass patient-card" style="padding: 1.5rem; border-radius: 16px; background: rgba(255,255,255,0.02);">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;">
+                <div style="width: 50px; height: 50px; border-radius: 12px; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                    ${p.name.charAt(0)}
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem;">${p.name}</h3>
+                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">${p.email}</p>
+                </div>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted);">Total Visits:</span>
+                    <span style="font-weight: 600;">${p.appointments.length}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Last Visit:</span>
+                    <span style="font-weight: 600;">${p.appointments[0] ? new Date(p.appointments[0].date).toLocaleDateString() : 'N/A'}</span>
+                </div>
+            </div>
+            <button onclick="openWorkspace(${latestBookingId})" class="btn btn-outline" style="width: 100%; border-radius: 10px; font-size: 0.85rem;">
+                <i class="fa-solid fa-folder-open" style="margin-right: 0.5rem;"></i> Patient Records
+            </button>
+        </div>`;
+    }).join('');
+}
+
+function filterPatients() {
+    const query = document.getElementById('patientSearchInput').value.toLowerCase();
+    const filtered = allPatientsData.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.email.toLowerCase().includes(query)
+    );
+    renderPatientsDirectory(filtered);
+}
+
+function exportPatientsCSV() {
+    if (allPatientsData.length === 0) {
+        showToast("No data to export", "warning");
+        return;
+    }
+
+    const headers = ["Patient Name", "Email", "Total Appointments", "Last Visit"];
+    const rows = allPatientsData.map(p => [
+        p.name,
+        p.email,
+        p.appointments.length,
+        p.appointments[0] ? p.appointments[0].date : "N/A"
+    ]);
+
+    let csvContent = "data:text/csv;charset=utf-8," 
+        + headers.join(",") + "\n"
+        + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `AuraMed_Patients_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast("Patient list exported successfully", "success");
+}

@@ -22,8 +22,14 @@ if (strpos($uri, '/api/') === 0) {
 }
 
 // 2. Serve static uploaded files directly from backend/uploads
-if (strpos($uri, '/backend/uploads/') === 0) {
-    $file = __DIR__ . $uri;
+if (strpos($uri, '/backend/uploads/') === 0 || strpos($uri, '/uploads/') === 0) {
+    // If it starts with /uploads/, prepend /backend
+    if (strpos($uri, '/uploads/') === 0 && strpos($uri, '/backend/') !== 0) {
+        $file = __DIR__ . '/backend' . $uri;
+    } else {
+        $file = __DIR__ . $uri;
+    }
+    
     if (file_exists($file) && !is_dir($file)) {
         // Determine MIME type
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
