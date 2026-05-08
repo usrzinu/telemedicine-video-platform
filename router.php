@@ -8,8 +8,15 @@
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// 1. Route API requests to the backend entry point (index.php)
+// 1. Route API requests
 if (strpos($uri, '/api/') === 0) {
+    // If the file exists directly in /api/ directory, execute it (for newly added endpoints)
+    $directFile = __DIR__ . $uri;
+    if (file_exists($directFile) && pathinfo($directFile, PATHINFO_EXTENSION) === 'php') {
+        include $directFile;
+        exit;
+    }
+    // Otherwise fallback to backend/index.php
     include __DIR__ . '/backend/index.php';
     exit;
 }

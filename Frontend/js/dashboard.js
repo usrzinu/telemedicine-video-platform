@@ -518,11 +518,13 @@ async function initPatientDashboard() {
     // Navigation logic
     const navFindDoctors = document.getElementById('navFindDoctors');
     const navAppointments = document.getElementById('navAppointments');
+    const navConsultations = document.getElementById('navConsultations');
     const navHistory = document.getElementById('navHistory');
     const navSupport = document.getElementById('navSupport');
     
     if (navFindDoctors) navFindDoctors.addEventListener('click', () => switchPatientView('FindDoctors'));
     if (navAppointments) navAppointments.addEventListener('click', () => switchPatientView('Appointments'));
+    if (navConsultations) navConsultations.addEventListener('click', () => switchPatientView('Consultations'));
     if (navHistory) navHistory.addEventListener('click', () => switchPatientView('History'));
     if (navSupport) navSupport.addEventListener('click', () => switchPatientView('Support'));
 }
@@ -531,6 +533,8 @@ function switchPatientView(viewName) {
     // Hide all views
     document.getElementById('viewFindDoctors').style.display = 'none';
     document.getElementById('viewAppointments').style.display = 'none';
+    const viewConsultations = document.getElementById('viewConsultations');
+    if (viewConsultations) viewConsultations.style.display = 'none';
     document.getElementById('viewHistory').style.display = 'none';
     document.getElementById('viewSupport').style.display = 'none';
     
@@ -538,8 +542,11 @@ function switchPatientView(viewName) {
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
     
     // Show selected view and activate nav
-    document.getElementById('view' + viewName).style.display = 'block';
-    document.getElementById('nav' + viewName).classList.add('active');
+    const targetView = document.getElementById('view' + viewName);
+    if (targetView) targetView.style.display = 'block';
+    
+    const targetNav = document.getElementById('nav' + viewName);
+    if (targetNav) targetNav.classList.add('active');
     
     // Update header text
     const welcomeMsg = document.getElementById('welcomeMsg');
@@ -547,6 +554,7 @@ function switchPatientView(viewName) {
         if (viewName === 'Support') welcomeMsg.innerText = 'Support Center';
         else if (viewName === 'Appointments') welcomeMsg.innerText = 'My Appointments';
         else if (viewName === 'History') welcomeMsg.innerText = 'Medical History';
+        else if (viewName === 'Consultations') welcomeMsg.innerText = 'Active Consultations';
         else welcomeMsg.innerText = 'Welcome';
     }
 
@@ -580,8 +588,18 @@ async function loadPatientAppointments() {
             listContainer.innerHTML = data.map(app => {
                 const photoPath = app.profile_photo ? (app.profile_photo.startsWith('/') ? app.profile_photo : '/' + app.profile_photo) : '';
                 
+                let isExpired = false;
+                try {
+                    const slotEndDateTime = new Date(`${app.date}T${app.end_time}`);
+                    if (slotEndDateTime < new Date() && app.appointment_status !== 'completed') {
+                        isExpired = true;
+                    }
+                } catch(e) {}
+
                 let statusBadge = '';
-                if (app.appointment_status === 'confirmed' || app.appointment_status === 'paid') {
+                if (isExpired) {
+                    statusBadge = `<span style="padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #ef4444; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);"><i class="fa-solid fa-calendar-xmark" style="margin-right:4px;"></i>Slot Expired</span>`;
+                } else if (app.appointment_status === 'confirmed' || app.appointment_status === 'paid') {
                     statusBadge = `<span style="padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #10b981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);"><i class="fa-solid fa-check-double" style="margin-right:4px;"></i>Confirmed</span>`;
                 } else if (app.appointment_status === 'payment_pending') {
                     statusBadge = `<span style="padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #f59e0b; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2);"><i class="fa-solid fa-hourglass-half" style="margin-right:4px;"></i>Waiting for Doctor Verification</span>`;
@@ -861,11 +879,13 @@ function initDoctorDashboard() {
     // Navigation logic
     const navRequests = document.getElementById('nav-requests');
     const navSchedule = document.getElementById('nav-schedule');
+    const navConsultations = document.getElementById('nav-consultations');
     const navPatients = document.getElementById('nav-patients');
     const navPayments = document.getElementById('nav-payments');
     
     if (navRequests) navRequests.addEventListener('click', () => switchDoctorView('requests'));
     if (navSchedule) navSchedule.addEventListener('click', () => switchDoctorView('schedule'));
+    if (navConsultations) navConsultations.addEventListener('click', () => switchDoctorView('consultations'));
     if (navPatients) navPatients.addEventListener('click', () => switchDoctorView('patients'));
     if (navPayments) navPayments.addEventListener('click', () => switchDoctorView('payments'));
 
@@ -908,9 +928,30 @@ async function loadSlots() {
         }
 
         tbody.innerHTML = data.map(slot => {
-            const statusColor = slot.status === 'available' ? '#10b981' : '#f59e0b';
-            const statusIcon  = slot.status === 'available' ? 'fa-circle-check' : 'fa-clock';
-            const statusLabel = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
+            // Check if slot is in the past
+            let currentStatus = slot.status;
+            try {
+                const slotEndDateTime = new Date(`${slot.date}T${slot.end_time}`);
+                if (slotEndDateTime < new Date() && slot.status === 'available') {
+                    currentStatus = 'expired';
+                }
+            } catch(e) {}
+
+            let statusColor = '#6b7280'; // default gray
+            let statusIcon = 'fa-info-circle';
+            
+            if (currentStatus === 'available') {
+                statusColor = '#10b981';
+                statusIcon = 'fa-circle-check';
+            } else if (currentStatus === 'booked') {
+                statusColor = '#f59e0b';
+                statusIcon = 'fa-clock';
+            } else if (currentStatus === 'expired') {
+                statusColor = '#ef4444';
+                statusIcon = 'fa-calendar-xmark';
+            }
+
+            const statusLabel = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
 
             return `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;"
@@ -1126,17 +1167,19 @@ function renderAppointments(containerId, appointments, emptyMessage) {
 function switchDoctorView(viewName) {
     const navRequests = document.getElementById('nav-requests');
     const navSchedule = document.getElementById('nav-schedule');
+    const navConsultations = document.getElementById('nav-consultations');
     const navPatients = document.getElementById('nav-patients');
     const navPayments = document.getElementById('nav-payments');
     
     const viewRequests = document.getElementById('requestsViewContainer');
     const viewSchedule = document.getElementById('scheduleViewContainer');
+    const viewConsultations = document.getElementById('consultationsViewContainer');
     const viewPatients = document.getElementById('patientsViewContainer');
     const viewPayments = document.getElementById('paymentsViewContainer');
 
     // Hide all views and deactivate all nav items
-    [viewRequests, viewSchedule, viewPatients, viewPayments].forEach(v => { if (v) v.style.display = 'none'; });
-    [navRequests, navSchedule, navPatients, navPayments].forEach(n => n?.classList.remove('active'));
+    [viewRequests, viewSchedule, viewConsultations, viewPatients, viewPayments].forEach(v => { if (v) v.style.display = 'none'; });
+    [navRequests, navSchedule, navConsultations, navPatients, navPayments].forEach(n => n?.classList.remove('active'));
 
     if (viewName === 'requests') {
         navRequests?.classList.add('active');
@@ -1146,6 +1189,10 @@ function switchDoctorView(viewName) {
         navSchedule?.classList.add('active');
         if (viewSchedule) viewSchedule.style.display = 'block';
         loadDoctorAppointments();
+    } else if (viewName === 'consultations') {
+        navConsultations?.classList.add('active');
+        if (viewConsultations) viewConsultations.style.display = 'block';
+        // The doctor.js auto-polls, but we can trigger a manual load here if desired.
     } else if (viewName === 'patients') {
         navPatients?.classList.add('active');
         if (viewPatients) viewPatients.style.display = 'block';

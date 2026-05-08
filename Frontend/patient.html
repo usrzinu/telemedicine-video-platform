@@ -41,6 +41,10 @@
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Appointments</span>
                 </div>
+                <div class="nav-item" id="navConsultations">
+                    <i class="fa-solid fa-video"></i>
+                    <span>Consultations</span>
+                </div>
                 <div class="nav-item" id="navHistory">
                     <i class="fa-solid fa-folder-medical"></i>
                     <span>Medical History</span>
@@ -65,13 +69,19 @@
                 </div>
             </header>
 
+            <!-- Video Consultations View -->
+            <div id="viewConsultations" style="display: none;">
+                <!-- Active Video Consultations (Managed by patient.js) -->
+                <div id="activeConsultationsList" style="margin-bottom: 2rem;"></div>
+            </div>
+
             <div id="viewFindDoctors" style="display: block;">
                 <div class="stat-grid">
                     <div class="stat-card" style="cursor: pointer;" onclick="document.getElementById('navAppointments').click()">
                         <div class="stat-icon"><i class="fa-solid fa-calendar-plus"></i></div>
                         <div class="stat-info">
-                            <h3>Book</h3>
-                            <p>New Appointment</p>
+                            <h3>Booked</h3>
+                            <p>Appointments</p>
                         </div>
                     </div>
                     <div class="stat-card" style="cursor: pointer;" onclick="document.getElementById('navSupport').click()">
@@ -288,6 +298,7 @@
     </script>
     <script src="js/main.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/patient.js"></script>
 </body>
 </html>
 
