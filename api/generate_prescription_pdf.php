@@ -180,21 +180,21 @@ $export = isset($_GET['export']) && $_GET['export'] === 'pdf';
             bottom: 3rem;
             left: 3rem;
             right: 3rem;
-            border-top: 1px solid var(--border);
-            padding-top: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
         }
         .signature-box {
             text-align: center;
-            width: 200px;
+            width: 220px;
         }
         .signature-line {
-            border-top: 1px solid var(--text-main);
+            border-top: 2px solid #1e293b;
             margin-top: 4rem;
             padding-top: 0.5rem;
-            font-weight: 600;
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 0.9rem;
         }
         .btn-print {
             position: fixed;

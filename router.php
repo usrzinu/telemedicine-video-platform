@@ -8,6 +8,13 @@
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+// 0. Route specific root-level PHP files
+if ($uri === '/export_patient_report_pdf.php') {
+    if (file_exists(__DIR__ . '/export_patient_report_pdf.php')) {
+        include __DIR__ . '/export_patient_report_pdf.php';
+        exit;
+    }
+}
 // 1. Route API requests
 if (strpos($uri, '/api/') === 0) {
     // If the file exists directly in /api/ directory, execute it (for newly added endpoints)

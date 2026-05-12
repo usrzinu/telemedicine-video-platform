@@ -1192,7 +1192,9 @@ function switchDoctorView(viewName) {
     } else if (viewName === 'consultations') {
         navConsultations?.classList.add('active');
         if (viewConsultations) viewConsultations.style.display = 'block';
-        // The doctor.js auto-polls, but we can trigger a manual load here if desired.
+        if (typeof loadDoctorConsultationView === 'function') {
+            loadDoctorConsultationView();
+        }
     } else if (viewName === 'patients') {
         navPatients?.classList.add('active');
         if (viewPatients) viewPatients.style.display = 'block';

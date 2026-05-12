@@ -277,10 +277,11 @@
                             <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
                             <input type="text" id="patientSearchInput" placeholder="Search patient by name..." onkeyup="filterPatients()" style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
                         </div>
-                        <button class="btn btn-outline" onclick="exportPatientsCSV()" style="padding: 0.75rem 1.5rem; border-radius: 12px; border-color: #10b981; color: #10b981;">
-                            <i class="fa-solid fa-file-export"></i> Export List
+                        <button class="btn btn-outline" onclick="openExportModal()" style="padding: 0.75rem 1.5rem; border-radius: 12px; border-color: #10b981; color: #10b981;">
+                            <i class="fa-solid fa-file-pdf"></i> Export Report
                         </button>
                     </div>
+
                     <div id="patientsListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;"></div>
                 </div>
             </div>
@@ -302,10 +303,10 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 0.75rem;">
-                            <button class="btn btn-outline" onclick="closeWorkspace()" style="border-radius: 10px; padding: 0.6rem 1.2rem;">
-                                <i class="fa-solid fa-window-minimize"></i> Minimize
+                            <button id="wsMinimizeBtn" class="btn btn-outline" onclick="closeWorkspace()" style="border-radius: 10px; padding: 0.6rem 1.2rem;">
+                                <i class="fa-solid fa-window-minimize"></i> <span id="wsMinimizeBtnText">Minimize</span>
                             </button>
-                            <button class="btn btn-primary" onclick="confirmEndSession()" style="background: #ef4444; border-color: #ef4444; border-radius: 10px; padding: 0.6rem 1.2rem;">
+                            <button id="wsEndSessionBtn" class="btn btn-primary" onclick="confirmEndSession()" style="background: #ef4444; border-color: #ef4444; border-radius: 10px; padding: 0.6rem 1.2rem;">
                                 <i class="fa-solid fa-circle-stop"></i> End Session
                             </button>
                         </div>
@@ -352,28 +353,33 @@
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                         <div>
                                             <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Weight (kg)</label>
-                                            <input type="text" id="wsWeight" placeholder="e.g. 70" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                            <input type="text" id="wsWeight" placeholder="e.g. 70" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
                                         </div>
                                         <div>
                                             <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Blood Pressure</label>
-                                            <input type="text" id="wsBP" placeholder="120/80" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                            <input type="text" id="wsBP" placeholder="120/80" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
                                         </div>
                                         <div>
                                             <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Temp (°F)</label>
-                                            <input type="text" id="wsTemp" placeholder="98.6" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                            <input type="text" id="wsTemp" placeholder="98.6" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
                                         </div>
                                         <div>
                                             <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Oxygen (%)</label>
-                                            <input type="text" id="wsOxygen" placeholder="98" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                            <input type="text" id="wsOxygen" placeholder="98" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Section 2: Uploaded Reports -->
                                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                    <h3 style="margin: 0; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fa-solid fa-file-medical"></i> Medical Reports
-                                    </h3>
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <h3 style="margin: 0; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="fa-solid fa-file-medical"></i> Medical Reports
+                                        </h3>
+                                        <button onclick="loadPatientReports(currentWsBookingId)" title="Refresh reports" style="background: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--primary); cursor: pointer; padding: 0.2rem 0.5rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.3rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(14,165,233,0.1)'" onmouseout="this.style.background='none'">
+                                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                                        </button>
+                                    </div>
                                     <div id="wsReportsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
                                         <!-- Populated by JS -->
                                     </div>
@@ -385,9 +391,7 @@
                                         <i class="fa-solid fa-clock-rotate-left"></i> Medical History
                                     </h3>
                                     <div id="wsHistoryList" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                        <div class="glass" style="padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.02); opacity: 0.6;">
-                                            <p style="margin: 0; font-size: 0.85rem; text-align: center;">No previous consultations found.</p>
-                                        </div>
+                                        <!-- Populated by JS -->
                                     </div>
                                 </div>
 
@@ -467,7 +471,7 @@
                                             </div>
                                             
                                             <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
-                                                <button class="btn btn-primary" onclick="saveConsultationNotes()" style="padding: 0.8rem 2rem; background: #3b82f6; border-color: #3b82f6; font-weight: 700; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">
+                                                <button id="wsSaveNotesBtn" class="btn btn-primary" onclick="saveConsultationNotes()" style="padding: 0.8rem 2rem; background: #3b82f6; border-color: #3b82f6; font-weight: 700; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">
                                                     <i class="fa-solid fa-floppy-disk"></i> Save Clinical Notes
                                                 </button>
                                             </div>
@@ -485,6 +489,13 @@
                                             <!-- Populated by JS -->
                                         </div>
                                     </div>
+                                    
+                                    <!-- Footer / Signature -->
+                                    <div style="margin-top: auto; padding-top: 5rem; display: flex; justify-content: flex-end;">
+                                        <div style="text-align: center; border-top: 2px solid #1e293b; width: 220px; padding-top: 0.5rem;">
+                                            <div style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">Doctor's Signature</div>
+                                        </div>
+                                    </div>
 
                                 </div>
                             </div>
@@ -494,10 +505,10 @@
                                 <div style="margin-right: auto; color: #64748b; font-size: 0.85rem;">
                                     <i class="fa-solid fa-circle-info"></i> All changes are saved automatically.
                                 </div>
-                                <button class="btn btn-outline" style="color: #64748b; border-color: #e2e8f0;">
+                                <button id="wsDownloadDraftBtn" class="btn btn-outline" style="color: #64748b; border-color: #e2e8f0;">
                                     <i class="fa-solid fa-download"></i> Download Draft
                                 </button>
-                                <button class="btn btn-primary" onclick="printPrescription()" style="background: #1e293b; border-color: #1e293b;">
+                                <button id="wsPrintBtn" class="btn btn-primary" onclick="printPrescription()" style="background: #1e293b; border-color: #1e293b;">
                                     <i class="fa-solid fa-print"></i> Print Prescription
                                 </button>
                             </div>
@@ -508,6 +519,40 @@
             </div>
 
             <div id="toastContainer" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999;"></div>
+
+            <!-- Export Report Modal (Global) -->
+            <div id="exportReportModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 3000; align-items: center; justify-content: center;">
+                <div class="glass" style="width: 100%; max-width: 450px; padding: 2.5rem; border-radius: 20px; position: relative;">
+                    <i class="fa-solid fa-xmark" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted); font-size: 1.2rem;" onclick="closeExportModal()"></i>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.4rem;"><i class="fa-solid fa-file-medical" style="color: #10b981; margin-right: 0.5rem;"></i> Generate Clinical Report</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Select the report period to generate a professional PDF consultation summary.</p>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Report Period</label>
+                        <select id="reportPeriodSelect" onchange="toggleCustomDateRange()" style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.95rem;">
+                            <option value="today">Today's Report</option>
+                            <option value="weekly">This Week</option>
+                            <option value="monthly">This Month</option>
+                            <option value="custom">Custom Date Range</option>
+                        </select>
+                    </div>
+
+                    <div id="customDateRangeFields" style="display: none; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Start Date</label>
+                            <input type="date" id="reportStartDate" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">End Date</label>
+                            <input type="date" id="reportEndDate" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                        </div>
+                    </div>
+
+                    <button onclick="generatePatientReport()" class="btn btn-primary" style="width: 100%; padding: 1rem; font-weight: 700; border-radius: 12px; background: #10b981; border-color: #10b981; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-file-circle-check"></i> Generate Professional PDF
+                    </button>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -519,6 +564,6 @@
     </script>
     <script src="js/main.js"></script>
     <script src="js/dashboard.js"></script>
-    <script src="js/doctor.js"></script>
+    <script src="js/doctor.js?v=1.0.3"></script>
 </body>
 </html>

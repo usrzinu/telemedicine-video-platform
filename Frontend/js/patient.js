@@ -284,6 +284,12 @@ async function loadMedicalHistory() {
     const container = document.getElementById('historyListContainer');
     if (!patientId || !container) return;
 
+    container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; opacity: 0.6;">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--primary);"></i>
+            <p>Retrieving your medical records...</p>
+        </div>`;
+
     try {
         const response = await fetch(`${BASE_URL}/api/get_medical_history.php?patient_id=${patientId}`);
         const result = await response.json();
@@ -291,43 +297,70 @@ async function loadMedicalHistory() {
         if (result.success && result.data && result.data.length > 0) {
             let html = '';
             result.data.forEach(item => {
-                const date = new Date(item.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                // Use date from slot if available, fallback to creation time
+                const rawDate = item.date || item.created_at;
+                const dateObj = new Date(rawDate);
+                const displayDate = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
                 
                 html += `
-                <div class="glass" style="padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--primary);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div class="glass" style="padding: 1.75rem; border-radius: 16px; border-left: 5px solid var(--primary); transition: transform 0.2s; background: rgba(255,255,255,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <div>
-                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">Dr. ${item.doctor_name}</h3>
-                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${item.doctor_specialization || 'Consultant'}</p>
+                            <div style="font-size: 0.8rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Consultation Date</div>
+                            <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-main);">${displayDate}</h3>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                <i class="fa-solid fa-user-md" style="margin-right: 0.4rem; color: var(--secondary);"></i>
+                                <strong>Dr. ${item.doctor_name}</strong> • ${item.doctor_specialization || 'General Consultant'}
+                            </div>
                         </div>
-                        <div style="text-align: right;">
-                            <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">${date}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">ID: #${item.booking_id}</div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            ${item.prescription_id ? `
+                            <a href="${BASE_URL}/api/generate_prescription_pdf.php?prescription_id=${item.prescription_id}" target="_blank" class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 10px;">
+                                <i class="fa-solid fa-file-pdf" style="margin-right: 0.5rem;"></i> Download Rx
+                            </a>` : ''}
                         </div>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.25rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.15); padding: 1.25rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                         <div>
-                            <strong style="display: block; font-size: 0.8rem; color: var(--primary); margin-bottom: 0.4rem; text-transform: uppercase;">Diagnosis</strong>
-                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-main); font-weight: 500;">${item.diagnosis}</p>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Clinical Notes</div>
+                            <div style="margin-bottom: 0.75rem;">
+                                <span style="font-size: 0.8rem; color: var(--primary); display: block; margin-bottom: 0.1rem;">Symptoms:</span>
+                                <span style="font-size: 0.9rem; color: var(--text-main);">${item.symptoms || 'None recorded'}</span>
+                            </div>
+                            <div>
+                                <span style="font-size: 0.8rem; color: var(--primary); display: block; margin-bottom: 0.1rem;">Diagnosis:</span>
+                                <span style="font-size: 1rem; color: var(--text-main); font-weight: 700;">${item.diagnosis || 'General Checkup'}</span>
+                            </div>
                         </div>
-                        <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: flex-end;">
-                            ${item.prescription_id ? `
-                            <a href="${BASE_URL}/api/generate_prescription_pdf.php?prescription_id=${item.prescription_id}" target="_blank" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
-                                <i class="fa-solid fa-file-prescription"></i> Prescription
-                            </a>` : ''}
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Doctor's Advice</div>
+                            <p style="margin: 0; font-size: 0.9rem; color: var(--text-main); font-style: italic; line-height: 1.5;">"${item.advice || 'Follow standard health protocols.'}"</p>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Vitals Recorded</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <div style="font-size: 0.85rem;"><span style="color: var(--text-muted);">WT:</span> <strong>${item.weight || '—'} kg</strong></div>
+                                <div style="font-size: 0.85rem;"><span style="color: var(--text-muted);">BP:</span> <strong>${item.blood_pressure || '—'}</strong></div>
+                                <div style="font-size: 0.85rem;"><span style="color: var(--text-muted);">TEMP:</span> <strong>${item.temperature || '—'} °F</strong></div>
+                                <div style="font-size: 0.85rem;"><span style="color: var(--text-muted);">O2:</span> <strong>${item.oxygen_level || '—'} %</strong></div>
+                            </div>
                         </div>
                     </div>
 
                     ${item.reports && item.reports.length > 0 ? `
-                    <div style="border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-                        <strong style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Medical Reports (${item.reports.length})</strong>
+                    <div style="margin-top: 1rem;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600;">ATTACHED REPORTS (${item.reports.length})</div>
                         <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-                            ${item.reports.map(rpt => `
-                            <a href="${BASE_URL}/${rpt.file_path}" target="_blank" class="glass" style="padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.8rem; text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fa-solid ${rpt.file_path.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-file-image'}" style="color: ${rpt.file_path.endsWith('.pdf') ? '#ef4444' : '#3b82f6'};"></i>
-                                <span>${rpt.original_name}</span>
-                            </a>`).join('')}
+                            ${item.reports.map(rpt => {
+                                const isPdf = rpt.file_path.toLowerCase().endsWith('.pdf');
+                                return `
+                                <a href="${BASE_URL}/${rpt.file_path}" target="_blank" class="glass" style="padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.85rem; text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                                    <i class="fa-solid ${isPdf ? 'fa-file-pdf' : 'fa-file-image'}" style="color: ${isPdf ? '#ef4444' : '#3b82f6'}; font-size: 1rem;"></i>
+                                    <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rpt.original_name}</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem; opacity: 0.5;"></i>
+                                </a>`;
+                            }).join('')}
                         </div>
                     </div>` : ''}
                 </div>`;
@@ -335,15 +368,24 @@ async function loadMedicalHistory() {
             container.innerHTML = html;
         } else {
             container.innerHTML = `
-            <div style="padding: 4rem; text-align: center; opacity: 0.5;">
-                <i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                <h3>No History Found</h3>
-                <p>You haven't completed any consultations yet.</p>
+            <div class="glass" style="padding: 5rem 2rem; text-align: center; border-radius: 16px; background: rgba(255,255,255,0.02);">
+                <div style="background: rgba(255,255,255,0.05); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                </div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">No Medical History Yet</h3>
+                <p style="color: var(--text-muted); max-width: 400px; margin: 0 auto;">When you complete a video consultation with our specialists, your prescriptions and records will automatically appear here.</p>
+                <button class="btn btn-primary" style="margin-top: 2rem;" onclick="document.getElementById('navFindDoctors').click()">
+                    Book Your First Consultation
+                </button>
             </div>`;
         }
     } catch (error) {
         console.error("Error loading history:", error);
-        container.innerHTML = '<p class="text-center text-muted">Failed to load medical history.</p>';
+        container.innerHTML = `
+            <div class="glass" style="padding: 3rem; text-align: center; border-radius: 16px; color: #ef4444;">
+                <i class="fa-solid fa-circle-exclamation" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+                <p>Failed to load medical history. Please try refreshing the page.</p>
+            </div>`;
     }
 }
 
