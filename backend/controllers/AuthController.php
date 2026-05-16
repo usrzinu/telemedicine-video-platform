@@ -271,14 +271,26 @@ class AuthController {
             }
 
             // Success response
-            echo json_encode([
+            $response = [
                 "status" => "success",
                 "message" => "Login successful",
                 "id" => $user['id'],
                 "name" => $user['name'],
                 "email" => $user['email'],
                 "role" => $user['role']
-            ]);
+            ];
+
+            // If doctor, include their doctor table ID
+            if ($user['role'] === 'doctor') {
+                require_once __DIR__ . '/../models/DoctorModel.php';
+                $doctorModel = new DoctorModel($this->db);
+                $doc = $doctorModel->getByUserId($user['id']);
+                if ($doc) {
+                    $response['doctorId'] = $doc['id'];
+                }
+            }
+
+            echo json_encode($response);
         } else {
             // Password incorrect
             $this->sendResponse("error", "Invalid credentials.");

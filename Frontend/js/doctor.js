@@ -28,39 +28,218 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadDoctorConsultationView();
     checkDoctorSubscription();
+    initNavigation();
     docSessionPollInterval = setInterval(loadDoctorConsultationView, 10000);
 });
 
+function initNavigation() {
+    const navItems = {
+        'nav-requests': 'requestsViewContainer',
+        'nav-schedule': 'scheduleViewContainer',
+        'nav-consultations': 'consultationsViewContainer',
+        'nav-patients': 'patientsViewContainer',
+        'nav-payments': 'paymentsViewContainer',
+        'nav-subscription': 'subscriptionViewContainer'
+    };
+
+    Object.keys(navItems).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.onclick = () => {
+                // Remove active from all
+                Object.keys(navItems).forEach(nid => {
+                    const nel = document.getElementById(nid);
+                    if (nel) nel.classList.remove('active');
+                });
+                // Add active to current
+                el.classList.add('active');
+
+                // Hide all views
+                Object.values(navItems).forEach(vid => {
+                    const vel = document.getElementById(vid);
+                    if (vel) vel.style.display = 'none';
+                });
+                // Show current view
+                const currentView = document.getElementById(navItems[id]);
+                if (currentView) currentView.style.display = 'block';
+
+                if (id === 'nav-subscription') {
+                    loadSubscriptionView();
+                }
+            };
+        }
+    });
+}
+
 async function checkDoctorSubscription() {
-    const doctorId = localStorage.getItem('userId');
+    const doctorId = localStorage.getItem('doctorId'); // Use doctorId if available, fallback to userId
+    const userId = localStorage.getItem('userId');
     const badge = document.getElementById('subscriptionBadge');
     const planText = document.getElementById('subPlanText');
     
-    if (!doctorId || !badge) return;
+    if (!userId || !badge) return;
     
     try {
-        const response = await fetch(`${DOC_BASE}/api/doctor/manage_subscription.php?doctor_id=${doctorId}`);
+        const response = await fetch(`${DOC_BASE}/api/subscription/status?doctor_id=${doctorId || userId}`);
         const result = await response.json();
         
-        if (result.success && result.data) {
-            const sub = result.data;
+        if (result.status === 'success' && result.data.current) {
+            const sub = result.data.current;
             badge.style.display = 'flex';
-            planText.innerText = sub.plan_name;
+            planText.innerText = 'Professional';
             
-            if (sub.is_expired) {
-                badge.style.background = 'rgba(239, 68, 68, 0.1)';
-                badge.style.borderColor = '#ef4444';
-                planText.style.color = '#ef4444';
-                planText.innerText += ' (Expired)';
-            } else {
+            if (sub.subscription_status === 'active') {
                 badge.style.background = 'rgba(16, 185, 129, 0.1)';
                 badge.style.borderColor = '#10b981';
                 planText.style.color = '#10b981';
+            } else {
+                badge.style.background = 'rgba(239, 68, 68, 0.1)';
+                badge.style.borderColor = '#ef4444';
+                planText.style.color = '#ef4444';
+                planText.innerText = sub.subscription_status.toUpperCase();
             }
         }
     } catch (e) {
         console.error("Error checking subscription:", e);
     }
+}
+
+async function loadSubscriptionView() {
+    const doctorId = localStorage.getItem('doctorId') || localStorage.getItem('userId');
+    const historyBody = document.getElementById('billingHistoryBody');
+    const statusBadge = document.getElementById('subStatusBadge');
+    const expiryText = document.getElementById('subExpiryText');
+
+    if (!doctorId || !historyBody) return;
+
+    try {
+        const response = await fetch(`${DOC_BASE}/api/subscription/status?doctor_id=${doctorId}`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const { current, history } = result.data;
+
+            // Update Status Card
+            statusBadge.innerText = current.subscription_status.toUpperCase();
+            statusBadge.style.background = current.subscription_status === 'active' ? '#10b98120' : '#ef444420';
+            statusBadge.style.color = current.subscription_status === 'active' ? '#10b981' : '#ef4444';
+            expiryText.innerText = current.subscription_expiry ? formatDate(current.subscription_expiry) : 'N/A';
+
+            // Update History Table
+            if (history && history.length > 0) {
+                historyBody.innerHTML = history.map(h => `
+                    <tr style="border-bottom: 1px solid var(--glass-border);">
+                        <td style="padding: 1rem;">${formatDate(h.created_at)}</td>
+                        <td style="padding: 1rem;">${h.plan_name}</td>
+                        <td style="padding: 1rem; font-weight: 700;">${h.amount} TK</td>
+                        <td style="padding: 1rem; font-family: monospace; font-size: 0.85rem;">${h.transaction_id}</td>
+                        <td style="padding: 1rem;">
+                            <span style="padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: #10b98120; color: #10b981;">
+                                ${h.payment_status.toUpperCase()}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                historyBody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">No payment history found.</td></tr>';
+            }
+        }
+    } catch (e) {
+        console.error("Error loading subscription view:", e);
+    }
+}
+
+function openRenewalModal() {
+    const modal = document.getElementById('renewalModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        resetPaymentSteps();
+    }
+}
+
+function resetPaymentSteps() {
+    ['paymentStep1', 'paymentStep2', 'paymentStep3', 'paymentStep4'].forEach(id => {
+        document.getElementById(id).style.display = (id === 'paymentStep1') ? 'block' : 'none';
+    });
+    // Reset selections
+    document.querySelectorAll('.pay-method-card').forEach(el => el.classList.remove('active'));
+    document.getElementById('continueToPayBtn').disabled = true;
+    document.getElementById('continueToPayBtn').style.opacity = '0.5';
+    window.selectedPaymentMethod = null;
+}
+
+function closeRenewalModal() {
+    const modal = document.getElementById('renewalModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function selectPaymentMethod(method) {
+    window.selectedPaymentMethod = method;
+    document.querySelectorAll('.pay-method-card').forEach(el => el.classList.remove('active'));
+    document.getElementById(`method-${method}`).classList.add('active');
+    
+    const btn = document.getElementById('continueToPayBtn');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+}
+
+function goToPaymentForm() {
+    document.getElementById('paymentStep1').style.display = 'none';
+    document.getElementById('paymentStep2').style.display = 'block';
+    
+    // Toggle correct form
+    const isMobile = ['bkash', 'nagad'].includes(window.selectedPaymentMethod);
+    document.getElementById('bkashForm').style.display = isMobile ? 'block' : 'none';
+    document.getElementById('cardForm').style.display = isMobile ? 'none' : 'block';
+}
+
+function backToMethods() {
+    document.getElementById('paymentStep2').style.display = 'none';
+    document.getElementById('paymentStep1').style.display = 'block';
+}
+
+async function processProfessionalPayment() {
+    const doctorId = localStorage.getItem('doctorId') || localStorage.getItem('userId');
+    const manualTxId = document.getElementById('manualTxId').value.trim();
+    
+    // Switch to processing step
+    document.getElementById('paymentStep2').style.display = 'none';
+    document.getElementById('paymentStep3').style.display = 'block';
+
+    // Simulate 2.5s verification delay
+    setTimeout(async () => {
+        try {
+            // If they provided a manual TxID, use it; otherwise generate a professional one
+            const finalTxId = manualTxId || (window.selectedPaymentMethod.toUpperCase() + '_' + Math.random().toString(36).substr(2, 9).toUpperCase());
+            
+            const response = await fetch(`${DOC_BASE}/api/subscription/renew`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    doctor_id: doctorId,
+                    plan_name: 'Monthly Professional',
+                    amount: 1000,
+                    transaction_id: finalTxId
+                })
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                document.getElementById('paymentStep3').style.display = 'none';
+                document.getElementById('paymentStep4').style.display = 'block';
+                
+                loadSubscriptionView();
+                checkDoctorSubscription();
+            } else {
+                showToast(result.message || "Activation failed.", "error");
+                backToMethods();
+            }
+        } catch (e) {
+            console.error("Payment error:", e);
+            showToast("Network error during verification.", "error");
+            backToMethods();
+        }
+    }, 2500);
 }
 
 /* =========================================================

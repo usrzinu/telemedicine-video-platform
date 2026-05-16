@@ -97,6 +97,11 @@ switch ($route) {
         require_once __DIR__ . '/routes/support.php';
         break;
 
+    case '/api/subscription/status':
+    case '/api/subscription/renew':
+        require_once __DIR__ . '/routes/subscription.php';
+        break;
+
     default:
         // Handle dynamic routes like /api/support/ticket/{id}
         if (strpos($route, '/api/support/ticket/') !== false) {

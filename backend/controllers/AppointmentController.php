@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/AppointmentModel.php';
+require_once __DIR__ . '/../models/SubscriptionModel.php';
 
 class AppointmentController {
     private $db;
@@ -10,6 +11,7 @@ class AppointmentController {
         $database = new Database();
         $this->db = $database->getConnection();
         $this->appointmentModel = new AppointmentModel($this->db);
+        $this->subscriptionModel = new SubscriptionModel($this->db);
     }
 
     /**
@@ -88,6 +90,18 @@ class AppointmentController {
             if (!in_array($input['status'], $allowed)) {
                 $this->response("error", "Invalid status. Allowed: approved, rejected.");
                 return;
+            }
+
+            // Check subscription if approving
+            if ($input['status'] === 'approved') {
+                $appointment = $this->appointmentModel->getById($input['appointment_id']);
+                if ($appointment) {
+                    $sub = $this->subscriptionModel->getStatus($appointment['doctor_id']);
+                    if (!$sub || $sub['subscription_status'] !== 'active') {
+                        $this->response("error", "Your subscription is not active. Please renew to approve appointments.");
+                        return;
+                    }
+                }
             }
 
             $ok = $this->appointmentModel->updateStatus(

@@ -71,7 +71,7 @@ class DoctorModel {
         $query = "SELECT d.id, d.user_id, d.specialization, d.experience, d.qualification, d.consultation_fee, d.profile_photo, u.name as doctor_name, u.email 
                   FROM " . $this->table_name . " d
                   JOIN users u ON d.user_id = u.id
-                  WHERE d.status = 'approved'
+                  WHERE d.status = 'approved' AND d.subscription_status = 'active'
                   ORDER BY d.created_at DESC";
         
         $stmt = $this->conn->prepare($query);
