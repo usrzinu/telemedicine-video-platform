@@ -53,6 +53,10 @@
                     <i class="fa-solid fa-headset"></i>
                     <span>Support</span>
                 </div>
+                <div class="nav-item" id="navProfile">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Medical Profile</span>
+                </div>
             </nav>
         </aside>
 
@@ -121,13 +125,63 @@
             </div>
 
             <div id="viewHistory" style="display: none;">
-                <div class="data-card">
-                    <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-folder-medical" style="color: var(--primary); margin-right: 0.5rem;"></i> Medical History</h2>
-                    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
-                        <i class="fa-solid fa-file-waveform" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <h3>Coming Soon</h3>
-                        <p>Your medical history records will be accessible here.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin:0;"><i class="fa-solid fa-folder-medical" style="color: var(--primary); margin-right: 0.5rem;"></i> Medical History</h2>
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="loadMedicalHistory()">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh History
+                    </button>
+                </div>
+                
+                <div id="historyListContainer" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    <div class="data-card" style="text-align: center; padding: 3rem; opacity: 0.5;">
+                        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Loading your medical history...</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Medical Profile View -->
+            <div id="viewProfile" style="display: none;">
+                <div class="data-card" style="max-width: 600px;">
+                    <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-user-gear" style="color: var(--primary); margin-right: 0.5rem;"></i> My Medical Profile</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Ensure your medical information is accurate. This data will be automatically shared with your doctor during consultations.</p>
+                    
+                    <form id="profileUpdateForm" onsubmit="updateMedicalProfile(event)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                            <div class="form-group">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Age (Years)</label>
+                                <input type="number" id="profileAge" name="age" placeholder="e.g. 25" style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                            </div>
+                            <div class="form-group">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Gender</label>
+                                <select id="profileGender" name="gender" style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 2rem;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Blood Group</label>
+                            <select id="profileBloodGroup" name="blood_group" style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" id="profileUpdateBtn" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-weight: 700;">
+                            <i class="fa-solid fa-cloud-arrow-up" style="margin-right: 0.5rem;"></i> Save Medical Profile
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -279,6 +333,45 @@
                     </div>
                     <div id="convStatus" style="font-size: 0.85rem; text-align: center; color: var(--text-muted);">
                         Ticket status: <span id="ticketStatusLabel">...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Upload Modal -->
+            <div id="uploadReportModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
+                <div class="glass" style="width: 100%; max-width: 500px; padding: 2rem; border-radius: 16px; position: relative;">
+                    <i class="fa-solid fa-xmark" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted); font-size: 1.2rem;" onclick="closeUploadModal()"></i>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.4rem;"><i class="fa-solid fa-file-medical" style="color: var(--primary); margin-right: 0.5rem;"></i> Upload Medical Report</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Upload your lab reports, X-rays, or prescriptions for the doctor to review.</p>
+                    
+                    <form id="reportUploadForm" onsubmit="handleReportUpload(event)">
+                        <input type="hidden" id="uploadBookingId">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="glass" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; border: 2px dashed var(--glass-border); cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.02);" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(var(--primary-rgb), 0.05)'" onmouseout="this.style.borderColor='var(--glass-border)'; this.style.background='rgba(255,255,255,0.02)'">
+                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                                <span id="fileNameDisplay" style="font-weight: 500; color: var(--text-main);">Choose a file or drag it here</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">PDF, JPG, PNG (Max 10MB)</span>
+                                <input type="file" id="reportFile" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="updateFileName(this)">
+                            </label>
+                        </div>
+                        
+                        <div id="uploadProgress" style="display: none; margin-bottom: 1rem;">
+                            <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                <div id="progressBar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s;"></div>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); text-align: right; margin-top: 0.3rem;">Uploading...</div>
+                        </div>
+
+                        <button type="submit" id="uploadSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; border-radius: 10px;">
+                            <i class="fa-solid fa-upload" style="margin-right: 0.5rem;"></i> Upload Report
+                        </button>
+                    </form>
+
+                    <div id="uploadedReportsSection" style="margin-top: 2rem; display: none;">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-main);">Recently Uploaded</h3>
+                        <div id="uploadedReportsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <!-- List of uploaded reports -->
+                        </div>
                     </div>
                 </div>
             </div>

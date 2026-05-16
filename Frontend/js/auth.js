@@ -87,11 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (roleSelect) {
         roleSelect.addEventListener('change', (e) => {
             const isDoctor = e.target.value === 'doctor';
+            const isPatient = e.target.value === 'patient';
+            
             const notice = document.getElementById('doctorApprovalNotice');
             const doctorFields = document.getElementById('doctor-specific-fields');
+            const patientFields = document.getElementById('patient-specific-fields');
             
             if (notice) notice.style.display = isDoctor ? 'block' : 'none';
             if (doctorFields) doctorFields.style.display = isDoctor ? 'block' : 'none';
+            if (patientFields) patientFields.style.display = isPatient ? 'block' : 'none';
         });
     }
 
@@ -126,17 +130,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 } else {
                     // Use JSON for patient/admin signup
+                    const payload = {
+                        name: name,
+                        email: email,
+                        password: password,
+                        role: role
+                    };
+
+                    if (role === 'patient') {
+                        payload.age = signupForm.age.value;
+                        payload.gender = signupForm.gender.value;
+                        payload.blood_group = signupForm.blood_group.value;
+                    }
+
                     response = await fetch(`${API_BASE}/register`, {  
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({
-                            name: name,
-                            email: email,
-                            password: password,
-                            role: role
-                        })
+                        body: JSON.stringify(payload)
                     });
                 }
 

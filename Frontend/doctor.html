@@ -7,7 +7,116 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --surface-sheet: #ffffff;
+            --text-sheet: #1e293b;
+            --border-sheet: #e2e8f0;
+            --accent-sheet: #3b82f6;
+        }
+
+        .ws-tab-new {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .ws-tab-new.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .ws-tab-new:hover:not(.active) {
+            color: #1e293b;
+            background: #f1f5f9;
+        }
+
+        #prescriptionSheet textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .med-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1rem;
+        }
+
+        .med-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .med-row:hover {
+            background: #f8fafc;
+        }
+
+        .med-row td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+        }
+
+        .med-input {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+            color: #1e293b;
+            background: #fff;
+            transition: all 0.2s;
+        }
+
+        .med-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.05);
+        }
+
+        .med-remove-btn {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .med-remove-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        #consultationWorkspaceModal ::-webkit-scrollbar {
+            width: 6px;
+        }
+        #consultationWorkspaceModal ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #consultationWorkspaceModal ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+    </style>
 </head>
+<body>
     <!-- Top Navbar -->
     <nav class="top-navbar">
         <div class="top-navbar-left">
@@ -64,18 +173,23 @@
         <main class="main-content">
             <header class="dash-header">
                 <div>
-                    <h1 class="text-gradient" id="welcomeMsg" style="margin-bottom: 0.5rem;">Doctor Portal</h1>
+                    <h1 class="text-gradient" style="margin-bottom: 0.5rem;">Doctor Portal</h1>
                     <p style="margin-bottom: 0; color: var(--text-muted);">Manage your clinical activities securely.</p>
                 </div>
-                <div class="glass" style="padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.9rem; font-weight: 600;">
-                    <i class="fa-solid fa-stethoscope" style="color: var(--primary); margin-right: 0.5rem;"></i>
-                    Medical Provider
+                <div style="display: flex; gap: 0.75rem;">
+                    <div id="subscriptionBadge" class="glass" style="padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.9rem; font-weight: 600; display: none; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-crown" style="color: #f59e0b;"></i>
+                        <span id="subPlanText">Premium</span>
+                    </div>
+                    <div class="glass" style="padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.9rem; font-weight: 600;">
+                        <i class="fa-solid fa-stethoscope" style="color: var(--primary); margin-right: 0.5rem;"></i>
+                        Medical Provider
+                    </div>
                 </div>
             </header>
 
             <!-- Video Consultations View -->
             <div id="consultationsViewContainer" style="display: none; margin-top: 1.5rem;">
-                <!-- Active Video Sessions Control (Managed by doctor.js) -->
                 <div id="activeDoctorSessionsList" style="margin-bottom: 2rem;"></div>
             </div>
 
@@ -83,12 +197,9 @@
             <div id="requestsViewContainer" style="display: none; margin-top: 1.5rem;">
                 <section class="glass" style="padding: 2rem; border-radius: 16px; border-left: 4px solid #f59e0b;">
                     <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-inbox" style="color: #f59e0b;"></i>
-                        Incoming Booking Requests
+                        <i class="fa-solid fa-inbox" style="color: #f59e0b;"></i> Incoming Requests
                     </h2>
-                    <div id="incomingRequestsList">
-                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading requests...</p>
-                    </div>
+                    <div id="incomingRequestsList"></div>
                 </section>
             </div>
 
@@ -96,144 +207,355 @@
             <div id="paymentsViewContainer" style="display: none; margin-top: 1.5rem;">
                 <section class="glass" style="padding: 2rem; border-radius: 16px; border-left: 4px solid #10b981;">
                     <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-file-invoice-dollar" style="color: #10b981;"></i>
-                        Pending Payment Verifications
+                        <i class="fa-solid fa-file-invoice-dollar" style="color: #10b981;"></i> Payment Verifications
                     </h2>
-                    <div id="pendingPaymentsList">
-                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading payments...</p>
-                    </div>
+                    <div id="pendingPaymentsList"></div>
                 </section>
             </div>
 
             <!-- VIEW: APPOINTMENTS & SCHEDULE -->
             <div id="scheduleViewContainer">
-                <!-- Schedule / Availability Section -->
                 <section id="scheduleSection" class="glass" style="padding: 2rem; border-radius: 16px; margin-top: 1.5rem;">
                     <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-calendar-plus" style="color: var(--primary);"></i>
-                        Schedule / Availability
+                        <i class="fa-solid fa-calendar-plus" style="color: var(--primary);"></i> Schedule & Availability
                     </h2>
+                    <form id="addSlotForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; align-items: end;">
+                        <div>
+                            <label>Date</label>
+                            <input type="date" id="slotDate" required style="width:100%; padding:0.65rem; border-radius:10px; border:1px solid var(--glass-border); background:var(--surface);">
+                        </div>
+                        <div>
+                            <label>Start</label>
+                            <input type="time" id="slotStart" required style="width:100%; padding:0.65rem; border-radius:10px; border:1px solid var(--glass-border); background:var(--surface);">
+                        </div>
+                        <div>
+                            <label>End</label>
+                            <input type="time" id="slotEnd" required style="width:100%; padding:0.65rem; border-radius:10px; border:1px solid var(--glass-border); background:var(--surface);">
+                        </div>
+                        <button type="submit" id="addSlotBtn" class="btn btn-primary" style="padding:0.65rem; border-radius:10px;">Add Slot</button>
+                    </form>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--glass-border); text-align: left;">
+                                    <th style="padding: 1rem;">Date</th>
+                                    <th style="padding: 1rem;">Start</th>
+                                    <th style="padding: 1rem;">End</th>
+                                    <th style="padding: 1rem;">Status</th>
+                                    <th style="padding: 1rem;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="slotTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-                <!-- Add Slot Form -->
-                <form id="addSlotForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; align-items: end;">
-                    <div>
-                        <label for="slotDate" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
-                            <i class="fa-regular fa-calendar" style="margin-right: 0.3rem;"></i>Date
-                        </label>
-                        <input type="date" id="slotDate" required
-                               style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border);
-                                      background: var(--surface); color: var(--text-main); font-size: 0.9rem; font-family: inherit;">
-                    </div>
-                    <div>
-                        <label for="slotStart" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
-                            <i class="fa-regular fa-clock" style="margin-right: 0.3rem;"></i>Start Time
-                        </label>
-                        <input type="time" id="slotStart" required
-                               style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border);
-                                      background: var(--surface); color: var(--text-main); font-size: 0.9rem; font-family: inherit;">
-                    </div>
-                    <div>
-                        <label for="slotEnd" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
-                            <i class="fa-regular fa-clock" style="margin-right: 0.3rem;"></i>End Time
-                        </label>
-                        <input type="time" id="slotEnd" required
-                               style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--glass-border);
-                                      background: var(--surface); color: var(--text-main); font-size: 0.9rem; font-family: inherit;">
-                    </div>
-                    <div>
-                        <button type="submit" class="btn btn-primary" id="addSlotBtn"
-                                style="width: 100%; padding: 0.65rem 1.25rem; font-weight: 700; border-radius: 10px; font-size: 0.9rem;">
-                            <i class="fa-solid fa-plus" style="margin-right: 0.4rem;"></i>Add Slot
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Slot List -->
-                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fa-solid fa-list-check" style="color: var(--secondary);"></i>
-                    Your Availability Slots
-                </h3>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--glass-border); text-align: left;">
-                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Date</th>
-                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Start</th>
-                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">End</th>
-                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Status</th>
-                                <th style="padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="slotTableBody">
-                            <tr><td colspan="5" style="padding: 3rem; text-align: center; color: var(--text-muted);">
-                                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
-                                Loading slots...
-                            </td></tr>
-                        </tbody>
-                    </table>
+                <div id="appointmentsContainer" style="margin-top: 2rem;">
+                    <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                        <h2 style="margin-bottom: 1rem;"><i class="fa-solid fa-calendar-day"></i> Today's Schedule</h2>
+                        <div id="todayAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+                    </section>
+                    <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid var(--secondary);">
+                        <h2 style="margin-bottom: 1rem;"><i class="fa-solid fa-calendar-week"></i> Upcoming Appointments</h2>
+                        <div id="upcomingAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+                    </section>
+                    <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
+                        <h2 style="margin-bottom: 1rem;"><i class="fa-solid fa-clipboard-check"></i> Completed Appointments</h2>
+                        <div id="completedAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+                    </section>
                 </div>
-            </section>
-
-            <!-- Appointment Sections -->
-            <div id="appointmentsContainer" style="margin-top: 2rem;">
-                
-                <!-- Today's Schedule -->
-                <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
-                    <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-calendar-day" style="color: var(--primary);"></i>
-                        Today's Schedule
-                    </h2>
-                    <div id="todayAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
-                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading appointments...</p>
-                    </div>
-                </section>
-
-                <!-- Upcoming Appointments -->
-                <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid var(--secondary);">
-                    <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-calendar-week" style="color: var(--secondary);"></i>
-                        Upcoming Appointments
-                    </h2>
-                    <div id="upcomingAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
-                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading appointments...</p>
-                    </div>
-                </section>
-
-                <!-- Completed Appointments -->
-                <section class="glass" style="padding: 2rem; border-radius: 16px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
-                    <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-clipboard-check" style="color: #10b981;"></i>
-                        Completed Appointments
-                    </h2>
-                    <div id="completedAppointmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
-                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading appointments...</p>
-                    </div>
-                </section>
-
             </div>
-            </div> <!-- End scheduleViewContainer -->
 
             <!-- VIEW: MY PATIENTS -->
             <div id="patientsViewContainer" style="display: none; margin-top: 1.5rem;">
                 <div class="glass" style="padding: 2rem; border-radius: 16px;">
                     <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fa-solid fa-hospital-user" style="color: var(--primary);"></i>
-                        My Patients Directory
+                        <i class="fa-solid fa-hospital-user" style="color: var(--primary);"></i> My Patients Directory
                     </h2>
-                    
-                    <div id="patientsListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
-                        <p class="text-muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading patients...</p>
+                    <div style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <div style="flex-grow: 1; position: relative;">
+                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                            <input type="text" id="patientSearchInput" placeholder="Search patient by name..." onkeyup="filterPatients()" style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                        </div>
+                        <button class="btn btn-outline" onclick="openExportModal()" style="padding: 0.75rem 1.5rem; border-radius: 12px; border-color: #10b981; color: #10b981;">
+                            <i class="fa-solid fa-file-pdf"></i> Export Report
+                        </button>
+                    </div>
+
+                    <div id="patientsListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;"></div>
+                </div>
+            </div>
+
+            <!-- Consultation Workspace Modal -->
+            <div id="consultationWorkspaceModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center;">
+                <div class="glass" style="width: 98%; height: 95vh; max-width: 1600px; display: flex; flex-direction: column; border-radius: 24px; overflow: hidden; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                    <!-- Modal Header -->
+                    <div style="padding: 1.25rem 2rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: white;">
+                                <i class="fa-solid fa-user-doctor"></i>
+                            </div>
+                            <div>
+                                <h2 id="wsPatientName" style="margin:0; font-size: 1.4rem; letter-spacing: -0.02em;">Patient Consultation</h2>
+                                <div id="wsConsultationHeaderInfo" style="display: flex; gap: 1rem; margin-top: 0.25rem; font-size: 0.85rem; color: var(--text-muted);">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button id="wsMinimizeBtn" class="btn btn-outline" onclick="closeWorkspace()" style="border-radius: 10px; padding: 0.6rem 1.2rem;">
+                                <i class="fa-solid fa-window-minimize"></i> <span id="wsMinimizeBtnText">Minimize</span>
+                            </button>
+                            <button id="wsEndSessionBtn" class="btn btn-primary" onclick="confirmEndSession()" style="background: #ef4444; border-color: #ef4444; border-radius: 10px; padding: 0.6rem 1.2rem;">
+                                <i class="fa-solid fa-circle-stop"></i> End Session
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modal Body: 2-Column Layout -->
+                    <div style="flex-grow: 1; display: grid; grid-template-columns: 380px 1fr; overflow: hidden;">
+                        
+                        <!-- LEFT COLUMN: Patient Data (35% approx) -->
+                        <div style="background: rgba(0,0,0,0.2); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; overflow: hidden;">
+                            
+                            <div style="flex-grow: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+                                
+                                <!-- Section 1: Patient Information (ReadOnly) -->
+                                <div class="glass" style="padding: 1.25rem; border-radius: 16px; background: rgba(255,255,255,0.03);">
+                                    <h3 style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fa-solid fa-id-card"></i> Patient Identity
+                                    </h3>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Age</label>
+                                            <div id="wsAge" style="font-weight: 600; font-size: 0.9rem;">—</div>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Gender</label>
+                                            <div id="wsGender" style="font-weight: 600; font-size: 0.9rem;">—</div>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Blood Group</label>
+                                            <div id="wsBloodGroup" style="font-weight: 600; font-size: 0.9rem;">—</div>
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Consultation Date</label>
+                                            <div id="wsDate" style="font-weight: 600; font-size: 0.9rem;">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section 2: Clinical Vitals (Doctor Input) -->
+                                <div class="glass" style="padding: 1.25rem; border-radius: 16px; background: rgba(255,255,255,0.03); border-left: 4px solid var(--secondary);">
+                                    <h3 style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fa-solid fa-heart-pulse"></i> Clinical Vitals
+                                    </h3>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Weight (kg)</label>
+                                            <input type="text" id="wsWeight" placeholder="e.g. 70" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Blood Pressure</label>
+                                            <input type="text" id="wsBP" placeholder="120/80" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Temp (°F)</label>
+                                            <input type="text" id="wsTemp" placeholder="98.6" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem;">Oxygen (%)</label>
+                                            <input type="text" id="wsOxygen" placeholder="98" oninput="updateVitalsSheet()" style="width: 100%; padding: 0.4rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.85rem;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section 2: Uploaded Reports -->
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <h3 style="margin: 0; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="fa-solid fa-file-medical"></i> Medical Reports
+                                        </h3>
+                                        <button onclick="loadPatientReports(currentWsBookingId)" title="Refresh reports" style="background: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--primary); cursor: pointer; padding: 0.2rem 0.5rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.3rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(14,165,233,0.1)'" onmouseout="this.style.background='none'">
+                                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                                        </button>
+                                    </div>
+                                    <div id="wsReportsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+
+                                <!-- Section 3: Previous History -->
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <h3 style="margin: 0; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fa-solid fa-clock-rotate-left"></i> Medical History
+                                    </h3>
+                                    <div id="wsHistoryList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: Professional E-Prescription -->
+                        <div style="display: flex; flex-direction: column; overflow: hidden; background: #fff; color: #1e293b;">
+                            
+                            <!-- Prescription Workspace Tabs -->
+                            <div style="padding: 0.5rem 1.5rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; gap: 0.5rem;">
+                                <button id="tabNotes" class="ws-tab-new active" onclick="switchWsTabNew('notes')">Clinical Notes</button>
+                                <button id="tabPrescription" class="ws-tab-new" onclick="switchWsTabNew('prescription')">Rx Prescription</button>
+                            </div>
+
+                            <!-- Scrollable Sheet Content -->
+                            <div style="flex-grow: 1; overflow-y: auto; padding: 2.5rem;">
+                                
+                                <!-- THE ACTUAL PRESCRIPTION SHEET (A4 Look) -->
+                                <div id="prescriptionSheet" style="max-width: 900px; margin: 0 auto; background: white; min-height: 1000px; box-shadow: 0 0 40px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-radius: 4px; padding: 3rem; display: flex; flex-direction: column; font-family: 'Inter', sans-serif;">
+                                    
+                                    <!-- Sheet Header -->
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #3b82f6; padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                                        <div>
+                                            <div style="font-size: 1.8rem; font-weight: 800; color: #1e40af; margin-bottom: 0.25rem;">AuraMed <span style="font-weight: 400; color: #64748b;">Digital Rx</span></div>
+                                            <div id="wsDoctorNameSheet" style="font-size: 1.1rem; font-weight: 700; color: #334155;">Dr. User Name</div>
+                                            <div id="wsDoctorSpecialization" style="font-size: 0.9rem; color: #64748b;">MBBS, FCPS (Medicine)</div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-size: 0.85rem; color: #64748b;">Consultation Date</div>
+                                            <div id="wsDateSheet" style="font-size: 1rem; font-weight: 600; color: #334155;">May 08, 2026</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Patient Data Bar -->
+                                    <div style="background: #f1f5f9; padding: 1rem 1.5rem; border-radius: 8px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2.5rem;">
+                                        <div>
+                                            <span style="font-size: 0.75rem; color: #64748b; display: block;">Patient Name</span>
+                                            <span id="wsPatientNameSheet" style="font-weight: 700; color: #1e293b;">John Doe</span>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.75rem; color: #64748b; display: block;">Age / Gender</span>
+                                            <span id="wsAgeGenderSheet" style="font-weight: 600; color: #1e293b;">—</span>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.75rem; color: #64748b; display: block;">Vitals (W/BP/T/O)</span>
+                                            <span id="wsVitalsSheet" style="font-weight: 600; color: #1e293b;">—</span>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.75rem; color: #64748b; display: block;">Blood Group</span>
+                                            <span id="wsBloodGroupSheet" style="font-weight: 600; color: #1e293b;">—</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- CLINICAL NOTES SECTION -->
+                                    <div id="wsNotesContainer" style="display: block;">
+                                        <div style="display: flex; flex-direction: column; gap: 2rem;">
+                                            <div style="border-left: 4px solid #3b82f6; padding-left: 1rem;">
+                                                <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+                                                    <i class="fa-solid fa-stethoscope"></i> Chief Complaints / Symptoms
+                                                </h4>
+                                                <textarea id="wsSymptoms" placeholder="Enter patient symptoms..." style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; font-size: 0.95rem; min-height: 100px; resize: vertical;"></textarea>
+                                            </div>
+
+                                            <div style="border-left: 4px solid #8b5cf6; padding-left: 1rem;">
+                                                <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #6d28d9; display: flex; align-items: center; gap: 0.5rem;">
+                                                    <i class="fa-solid fa-microscope"></i> Diagnosis
+                                                </h4>
+                                                <textarea id="wsDiagnosis" placeholder="Enter clinical diagnosis..." style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; font-size: 0.95rem; min-height: 100px; resize: vertical;"></textarea>
+                                            </div>
+
+                                            <div style="border-left: 4px solid #10b981; padding-left: 1rem;">
+                                                <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #047857; display: flex; align-items: center; gap: 0.5rem;">
+                                                    <i class="fa-solid fa-comment-medical"></i> Advice & Instructions
+                                                </h4>
+                                                <textarea id="wsAdvice" placeholder="Dietary advice, lifestyle changes, or follow-up instructions..." style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; font-size: 0.95rem; min-height: 120px; resize: vertical;"></textarea>
+                                            </div>
+                                            
+                                            <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                                                <button id="wsSaveNotesBtn" class="btn btn-primary" onclick="saveConsultationNotes()" style="padding: 0.8rem 2rem; background: #3b82f6; border-color: #3b82f6; font-weight: 700; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">
+                                                    <i class="fa-solid fa-floppy-disk"></i> Save Clinical Notes
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- PRESCRIPTION SECTION -->
+                                    <div id="wsPrescriptionContainer" style="display: none;">
+                                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; color: #1e40af;">
+                                            <span style="font-size: 2.5rem; font-weight: 900; line-height: 1;">Rx</span>
+                                            <div style="height: 2px; flex-grow: 1; background: #e2e8f0;"></div>
+                                        </div>
+
+                                        <div id="wsPrescriptionFormPlaceholder">
+                                            <!-- Populated by JS -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Footer / Signature -->
+                                    <div style="margin-top: auto; padding-top: 5rem; display: flex; justify-content: flex-end;">
+                                        <div style="text-align: center; border-top: 2px solid #1e293b; width: 220px; padding-top: 0.5rem;">
+                                            <div style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">Doctor's Signature</div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- Bottom Sticky Action Bar -->
+                            <div style="padding: 1rem 2.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 1rem; align-items: center;">
+                                <div style="margin-right: auto; color: #64748b; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-circle-info"></i> All changes are saved automatically.
+                                </div>
+                                <button id="wsDownloadDraftBtn" class="btn btn-outline" style="color: #64748b; border-color: #e2e8f0;">
+                                    <i class="fa-solid fa-download"></i> Download Draft
+                                </button>
+                                <button id="wsPrintBtn" class="btn btn-primary" onclick="printPrescription()" style="background: #1e293b; border-color: #1e293b;">
+                                    <i class="fa-solid fa-print"></i> Print Prescription
+                                </button>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Toast Container -->
-            <div id="toastContainer" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;"></div>
+            <div id="toastContainer" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999;"></div>
 
+            <!-- Export Report Modal (Global) -->
+            <div id="exportReportModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 3000; align-items: center; justify-content: center;">
+                <div class="glass" style="width: 100%; max-width: 450px; padding: 2.5rem; border-radius: 20px; position: relative;">
+                    <i class="fa-solid fa-xmark" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted); font-size: 1.2rem;" onclick="closeExportModal()"></i>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.4rem;"><i class="fa-solid fa-file-medical" style="color: #10b981; margin-right: 0.5rem;"></i> Generate Clinical Report</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Select the report period to generate a professional PDF consultation summary.</p>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">Report Period</label>
+                        <select id="reportPeriodSelect" onchange="toggleCustomDateRange()" style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main); font-size: 0.95rem;">
+                            <option value="today">Today's Report</option>
+                            <option value="weekly">This Week</option>
+                            <option value="monthly">This Month</option>
+                            <option value="custom">Custom Date Range</option>
+                        </select>
+                    </div>
+
+                    <div id="customDateRangeFields" style="display: none; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Start Date</label>
+                            <input type="date" id="reportStartDate" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">End Date</label>
+                            <input type="date" id="reportEndDate" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface); color: var(--text-main);">
+                        </div>
+                    </div>
+
+                    <button onclick="generatePatientReport()" class="btn btn-primary" style="width: 100%; padding: 1rem; font-weight: 700; border-radius: 12px; background: #10b981; border-color: #10b981; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-file-circle-check"></i> Generate Professional PDF
+                    </button>
+                </div>
+            </div>
         </main>
     </div>
 
-    <!-- User Verification Scripts -->
     <script>
         const userRole = localStorage.getItem('userRole');
         if (!userRole || userRole !== 'doctor') {
@@ -242,7 +564,6 @@
     </script>
     <script src="js/main.js"></script>
     <script src="js/dashboard.js"></script>
-    <script src="js/doctor.js"></script>
+    <script src="js/doctor.js?v=1.0.3"></script>
 </body>
 </html>
-
