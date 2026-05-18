@@ -11,6 +11,37 @@ class AuthController {
         $database = new Database();
         $this->db = $database->getConnection();
         $this->userModel = new UserModel($this->db);
+        $this->ensureProfileSchema();
+    }
+
+    private function ensureProfileSchema() {
+        try {
+            $this->db->exec("
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='doctors' AND column_name='clinic_address') THEN
+                        ALTER TABLE doctors ADD COLUMN clinic_address TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='doctors' AND column_name='consultation_time') THEN
+                        ALTER TABLE doctors ADD COLUMN consultation_time INTEGER DEFAULT 20;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='dob') THEN
+                        ALTER TABLE users ADD COLUMN dob DATE;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='gender') THEN
+                        ALTER TABLE users ADD COLUMN gender VARCHAR(20);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='bio') THEN
+                        ALTER TABLE users ADD COLUMN bio TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='phone') THEN
+                        ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+                    END IF;
+                END $$;
+            ");
+        } catch (Exception $e) {
+            // Ignore if columns exist
+        }
     }
 
     // Process Registration (Now supports unified doctor signup)
@@ -67,7 +98,9 @@ class AuthController {
             $gender = isset($data->gender) ? $data->gender : null;
             $blood_group = isset($data->blood_group) ? $data->blood_group : null;
 
-            if (!$this->userModel->createUser($data->name, $data->email, $hashedPassword, $data->role, $age, $gender, $blood_group)) {
+            $phone = isset($data->phone) ? $data->phone : (isset($_POST['phone']) ? $_POST['phone'] : null);
+
+            if (!$this->userModel->createUser($data->name, $data->email, $hashedPassword, $data->role, $phone, $age, $gender, $blood_group)) {
                 throw new Exception("Failed to create user account.");
             }
 
@@ -95,15 +128,22 @@ class AuthController {
                 // Auto-resize profile photo to keep standard size (max 800px)
                 $this->resizeImage(__DIR__ . "/../../" . $photoPathStr, 800);
 
-                require_once __DIR__ . '/../models/DoctorModel.php';
                 $doctorModel = new DoctorModel($this->db);
+                
+                // Extract clinical data from either JSON or POST (FormData)
+                $spec = isset($data->specialization) ? $data->specialization : ($_POST['specialization'] ?? '');
+                $exp = isset($data->experience) ? $data->experience : ($_POST['experience'] ?? 0);
+                $qual = isset($data->qualification) ? $data->qualification : ($_POST['qualification'] ?? '');
+                $fee = isset($data->consultation_fee) ? $data->consultation_fee : ($_POST['consultation_fee'] ?? 0);
+                $license = isset($data->license_number) ? $data->license_number : ($_POST['license_number'] ?? '');
+
                 $docData = [
                     'user_id' => $user['id'],
-                    'specialization' => $data->specialization,
-                    'experience' => $data->experience,
-                    'qualification' => $data->qualification,
-                    'consultation_fee' => $data->consultation_fee,
-                    'license_number' => $data->license_number,
+                    'specialization' => $spec,
+                    'experience' => $exp,
+                    'qualification' => $qual,
+                    'consultation_fee' => $fee,
+                    'license_number' => $license,
                     'license_file' => $licensePathStr,
                     'profile_photo' => $photoPathStr
                 ];
@@ -254,18 +294,23 @@ class AuthController {
             
             // Check doctor approval status if applicable
             if ($user['role'] === 'doctor') {
-                require_once __DIR__ . '/../models/DoctorModel.php';
-                $doctorModel = new DoctorModel($this->db);
-                $doc = $doctorModel->getByUserId($user['id']);
-                
-                if (!$doc || $doc['status'] === 'pending') {
-                    $this->sendResponse("error", "Account pending admin approval. Please check back later.");
-                    return;
-                } else if ($doc['status'] === 'rejected') {
-                    $this->sendResponse("error", "Your doctor application was rejected. Please contact support.");
-                    return;
-                } else if ($doc['status'] === 'banned') {
-                    $this->sendResponse("error", "Account Suspended. Please contact administration.");
+                try {
+                    require_once __DIR__ . '/../models/DoctorModel.php';
+                    $doctorModel = new DoctorModel($this->db);
+                    $doc = $doctorModel->getByUserId($user['id']);
+                    
+                    if (!$doc || $doc['status'] === 'pending') {
+                        $this->sendResponse("error", "Account pending admin approval. Please check back later.");
+                        return;
+                    } else if ($doc['status'] === 'rejected') {
+                        $this->sendResponse("error", "Your doctor application was rejected. Please contact support.");
+                        return;
+                    } else if ($doc['status'] === 'banned') {
+                        $this->sendResponse("error", "Account Suspended. Please contact administration.");
+                        return;
+                    }
+                } catch (Exception $e) {
+                    $this->sendResponse("error", "Clinical Profile error: " . $e->getMessage());
                     return;
                 }
             }

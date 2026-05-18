@@ -31,10 +31,10 @@ class UserModel {
     }
 
     // Create a new user
-    public function createUser($name, $email, $password, $role, $age = null, $gender = null, $blood_group = null) {
+    public function createUser($name, $email, $password, $role, $phone = null, $age = null, $gender = null, $blood_group = null) {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (name, email, password, role, age, gender, blood_group) 
-                  VALUES (:name, :email, :password, :role, :age, :gender, :blood_group)";
+                  (name, email, password, role, phone, age, gender, blood_group) 
+                  VALUES (:name, :email, :password, :role, :phone, :age, :gender, :blood_group)";
                   
         $stmt = $this->conn->prepare($query);
         
@@ -51,6 +51,7 @@ class UserModel {
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":password", $password); // Password should already be hashed
         $stmt->bindParam(":role", $role);
+        $stmt->bindParam(":phone", $phone);
         $stmt->bindParam(":age", $age);
         $stmt->bindParam(":gender", $gender);
         $stmt->bindParam(":blood_group", $blood_group);

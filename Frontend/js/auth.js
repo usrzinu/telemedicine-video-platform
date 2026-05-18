@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const payload = {
                         name: name,
                         email: email,
+                        phone: document.getElementById('phone').value,
                         password: password,
                         role: role
                     };

@@ -99,4 +99,24 @@ class SupportModel {
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Get unread messages count for admin
+     */
+    public function getUnreadCount() {
+        $query = "SELECT COUNT(*) FROM support_messages WHERE sender_role = 'patient' AND is_read = FALSE";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Mark all messages in a ticket as read by admin
+     */
+    public function markAsRead($ticket_id) {
+        $query = "UPDATE support_messages SET is_read = TRUE WHERE ticket_id = :ticket_id AND sender_role = 'patient'";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':ticket_id', $ticket_id);
+        return $stmt->execute();
+    }
 }

@@ -33,6 +33,9 @@ if ($uri === '/api/support/create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $supportController->adminReply($data);
 
+} else if ($uri === '/api/admin/support/unread-count' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $supportController->getUnreadCount();
+
 } else {
     http_response_code(404);
     echo json_encode(["status" => "error", "message" => "Endpoint not found in Support Router."]);

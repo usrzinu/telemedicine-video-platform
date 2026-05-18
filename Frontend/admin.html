@@ -8,6 +8,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+            50%       { transform: scale(1.15); box-shadow: 0 0 14px rgba(239,68,68,0.9); }
+        }
+    </style>
 </head>
 <body>
     <!-- Top Navbar -->
@@ -63,9 +69,26 @@
                     <i class="fa-solid fa-user-doctor"></i>
                     <span>View Doctors</span>
                 </div>
-                <div class="nav-item" id="sidebarMessages">
+                <div class="nav-item" id="sidebarMessages" style="position:relative;">
                     <i class="fa-solid fa-envelope"></i>
                     <span>Messages</span>
+                    <span id="msgBadge" style="
+                        display: none;
+                        position: absolute;
+                        top: 6px; right: 8px;
+                        background: #ef4444;
+                        color: white;
+                        font-size: 0.65rem;
+                        font-weight: 700;
+                        min-width: 18px;
+                        height: 18px;
+                        border-radius: 999px;
+                        padding: 0 5px;
+                        line-height: 18px;
+                        text-align: center;
+                        box-shadow: 0 0 8px rgba(239,68,68,0.6);
+                        animation: badgePulse 1.5s infinite;
+                    ">0</span>
                 </div>
                 <div class="nav-item" id="sidebarSettings">
                     <i class="fa-solid fa-gear"></i>

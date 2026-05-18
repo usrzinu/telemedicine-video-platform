@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Tab Navigation Logic
     const navItems = document.querySelectorAll('.nav-item');
-    const views = ['viewFindDoctors', 'viewAppointments', 'viewConsultations', 'viewHistory', 'viewSupport', 'viewProfile'];
+    const views = ['viewFindDoctors', 'viewAppointments', 'viewConsultations', 'viewHistory', 'viewSupport', 'viewProfile', 'viewLabReports'];
     
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -349,16 +349,22 @@ async function loadMedicalHistory() {
                     </div>
 
                     ${item.reports && item.reports.length > 0 ? `
-                    <div style="margin-top: 1rem;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600;">ATTACHED REPORTS (${item.reports.length})</div>
+                    <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Clinical Attachments (${item.reports.length})</div>
                         <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
                             ${item.reports.map(rpt => {
-                                const isPdf = rpt.file_path.toLowerCase().endsWith('.pdf');
+                                const ext = rpt.file_path.split('.').pop().toLowerCase();
+                                let icon = 'fa-file-medical';
+                                let iconColor = 'var(--primary)';
+                                
+                                if (ext === 'pdf') { icon = 'fa-file-pdf'; iconColor = '#ef4444'; }
+                                else if (['jpg', 'jpeg', 'png'].includes(ext)) { icon = 'fa-file-image'; iconColor = '#3b82f6'; }
+
                                 return `
-                                <a href="${BASE_URL}/${rpt.file_path}" target="_blank" class="glass" style="padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.85rem; text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                                    <i class="fa-solid ${isPdf ? 'fa-file-pdf' : 'fa-file-image'}" style="color: ${isPdf ? '#ef4444' : '#3b82f6'}; font-size: 1rem;"></i>
-                                    <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rpt.original_name}</span>
-                                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem; opacity: 0.5;"></i>
+                                <a href="${BASE_URL}/${rpt.file_path}" target="_blank" class="glass" style="padding: 0.65rem 1rem; border-radius: 10px; font-size: 0.85rem; text-decoration: none; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.transform='translateY(0)'">
+                                    <i class="fa-solid ${icon}" style="color: ${iconColor}; font-size: 1.1rem;"></i>
+                                    <span style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">${rpt.original_name}</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem; opacity: 0.4;"></i>
                                 </a>`;
                             }).join('')}
                         </div>
@@ -421,6 +427,97 @@ async function loadUploadedReports(bookingId) {
         }
     } catch (error) {
         console.error("Error loading reports:", error);
+    }
+}
+
+/* -------------------------------------------------------
+   CENTRALIZED LAB REPOSITORY LOGIC
+------------------------------------------------------- */
+
+function showLabReports() {
+    // Hide all views
+    const views = ['viewFindDoctors', 'viewAppointments', 'viewConsultations', 'viewHistory', 'viewSupport', 'viewProfile', 'viewLabReports'];
+    views.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) el.style.display = 'none';
+    });
+
+    // Remove active state from sidebar nav
+    document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('active'));
+
+    // Show Lab view
+    const target = document.getElementById('viewLabReports');
+    if (target) {
+        target.style.display = 'block';
+        loadAllPatientReports();
+    }
+}
+
+async function loadAllPatientReports() {
+    const patientId = localStorage.getItem('userId');
+    const container = document.getElementById('allReportsList');
+    if (!patientId || !container) return;
+
+    container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; grid-column: 1/-1; opacity: 0.6;">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: #10b981;"></i>
+            <p>Scanning your digital lab repository...</p>
+        </div>`;
+
+    try {
+        const response = await fetch(`${BASE_URL}/api/get_all_patient_reports.php?patient_id=${patientId}`);
+        const result = await response.json();
+
+        if (result.success && result.data && result.data.length > 0) {
+            let html = '';
+            result.data.forEach(rpt => {
+                const ext = rpt.file_path.split('.').pop().toLowerCase();
+                let icon = 'fa-file-medical';
+                let iconColor = '#10b981';
+                
+                if (ext === 'pdf') { icon = 'fa-file-pdf'; iconColor = '#ef4444'; }
+                else if (['jpg', 'jpeg', 'png'].includes(ext)) { icon = 'fa-file-image'; iconColor = '#3b82f6'; }
+
+                const uploadDate = new Date(rpt.uploaded_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                html += `
+                <div class="glass" style="padding: 1.25rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 1rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='rgba(16, 185, 129, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.08)'">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                        <div style="width: 45px; height: 45px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa-solid ${icon}" style="color: ${iconColor}; font-size: 1.4rem;"></i>
+                        </div>
+                        <div style="overflow: hidden;">
+                            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${rpt.original_name}">${rpt.original_name}</h4>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                Uploaded on ${uploadDate}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size: 0.85rem; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.15); color: var(--text-muted);">
+                        <i class="fa-solid fa-user-doctor" style="margin-right: 0.4rem; font-size: 0.8rem;"></i>
+                        Ref: Dr. ${rpt.doctor_name || 'General Upload'}
+                    </div>
+
+                    <a href="${BASE_URL}/${rpt.file_path}" target="_blank" class="btn btn-primary" style="width: 100%; padding: 0.6rem; font-size: 0.85rem; border-radius: 8px; background: #10b981; color: white;">
+                        <i class="fa-solid fa-eye" style="margin-right: 0.4rem;"></i> View Report
+                    </a>
+                </div>`;
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+            <div class="glass" style="padding: 4rem 2rem; text-align: center; border-radius: 16px; background: rgba(255,255,255,0.02); grid-column: 1/-1;">
+                <div style="background: rgba(16, 185, 129, 0.05); width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                    <i class="fa-solid fa-vial-circle-check" style="font-size: 2rem; color: #10b981; opacity: 0.5;"></i>
+                </div>
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">No Lab Reports Found</h4>
+                <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 300px; margin: 0 auto;">Your digital laboratory results and clinical uploads will appear here automatically.</p>
+            </div>`;
+        }
+    } catch (error) {
+        console.error("Error loading lab repository:", error);
+        container.innerHTML = `<p class="text-danger text-center" style="grid-column: 1/-1;">Unable to load your clinical files. Please try again.</p>`;
     }
 }
 

@@ -23,6 +23,8 @@ function respond(bool $success, string $message, $data = null): void {
 $patient_id = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : null;
 // exclude_booking_id is optional (used by doctor workspace to hide current booking)
 $exclude_id = isset($_GET['exclude_booking_id']) ? (int)$_GET['exclude_booking_id'] : 0;
+// doctor_id is optional (enforces strict privacy so doctors only see their own records)
+$doctor_id = isset($_GET['doctor_id']) ? (int)$_GET['doctor_id'] : 0;
 
 if (!$patient_id) {
     respond(false, "Patient ID is required.");
@@ -55,12 +57,15 @@ try {
         LEFT JOIN doctors dp ON dp.user_id = u.id
         WHERE a.patient_id = :patient_id
           AND (:exclude_id = 0 OR a.id != :exclude_id2)
+          AND (:doctor_id = 0 OR cr.doctor_id = :doctor_id2)
         ORDER BY s.date DESC, cr.created_at DESC
     ");
 
     $stmt->bindParam(':patient_id', $patient_id, PDO::PARAM_INT);
     $stmt->bindParam(':exclude_id', $exclude_id, PDO::PARAM_INT);
     $stmt->bindParam(':exclude_id2', $exclude_id, PDO::PARAM_INT);
+    $stmt->bindParam(':doctor_id', $doctor_id, PDO::PARAM_INT);
+    $stmt->bindParam(':doctor_id2', $doctor_id, PDO::PARAM_INT);
     $stmt->execute();
 
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);

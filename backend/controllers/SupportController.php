@@ -5,11 +5,33 @@ require_once __DIR__ . '/../models/SupportModel.php';
 
 class SupportController {
     private $supportModel;
+    private $db;
 
     public function __construct() {
         $database = new Database();
-        $db = $database->getConnection();
-        $this->supportModel = new SupportModel($db);
+        $this->db = $database->getConnection();
+        $this->supportModel = new SupportModel($this->db);
+        $this->ensureSchema();
+    }
+
+    /**
+     * Safely add is_read column if it doesn't exist yet.
+     */
+    private function ensureSchema() {
+        try {
+            $query = "SELECT COUNT(*) FROM information_schema.columns 
+                      WHERE table_name = 'support_messages' AND column_name = 'is_read'";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $exists = $stmt->fetchColumn() > 0;
+
+            if (!$exists) {
+                $this->db->exec("ALTER TABLE support_messages ADD COLUMN is_read BOOLEAN DEFAULT FALSE");
+            }
+        } catch (Exception $e) {
+            // Non-fatal: schema check failed, continue without crashing
+            error_log("SupportController ensureSchema error: " . $e->getMessage());
+        }
     }
 
     /**
@@ -53,6 +75,10 @@ class SupportController {
             return;
         }
         $messages = $this->supportModel->getMessages($ticketId);
+
+        // Mark patient messages as read (admin is viewing)
+        $this->supportModel->markAsRead($ticketId);
+
         echo json_encode([
             "status" => "success",
             "data" => [
@@ -103,6 +129,19 @@ class SupportController {
             $this->response("success", "Reply sent.");
         } else {
             $this->response("error", "Failed to send reply.");
+        }
+    }
+
+    /**
+     * GET /api/admin/support/unread-count
+     */
+    public function getUnreadCount() {
+        try {
+            $count = $this->supportModel->getUnreadCount();
+            echo json_encode(["status" => "success", "count" => $count]);
+        } catch (Exception $e) {
+            // is_read column might not exist yet on some setups
+            echo json_encode(["status" => "success", "count" => 0]);
         }
     }
 
