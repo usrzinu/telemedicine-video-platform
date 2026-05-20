@@ -304,7 +304,7 @@ if ($period === 'custom') {
     <script>
         // Auto-open print dialog
         window.onload = function() {
-            // Uncomment if you want automatic prompt
+            
             // window.print();
         }
     </script>

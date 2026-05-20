@@ -430,12 +430,33 @@
                                     <div class="form-group">
                                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Specialization</label>
                                         <select id="prof-spec" style="width: 100%; padding: 0.85rem; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--surface);">
+                                            <option value="Allergy and Immunology">Allergy and Immunology</option>
+                                            <option value="Anesthesiology">Anesthesiology</option>
                                             <option value="Cardiologist">Cardiologist</option>
                                             <option value="Dermatologist">Dermatologist</option>
+                                            <option value="Emergency Medicine">Emergency Medicine</option>
+                                            <option value="Endocrinology">Endocrinology</option>
+                                            <option value="Family Medicine">Family Medicine</option>
+                                            <option value="Gastroenterology">Gastroenterology</option>
+                                            <option value="General Physician">General Physician</option>
+                                            <option value="Geriatrics">Geriatrics</option>
+                                            <option value="Hematology">Hematology</option>
+                                            <option value="Infectious Disease">Infectious Disease</option>
+                                            <option value="Internal Medicine">Internal Medicine</option>
+                                            <option value="Nephrology">Nephrology</option>
                                             <option value="Neurologist">Neurologist</option>
+                                            <option value="Obstetrics and Gynecology">Obstetrics and Gynecology</option>
+                                            <option value="Oncology">Oncology</option>
+                                            <option value="Ophthalmology">Ophthalmology</option>
+                                            <option value="Orthopedics">Orthopedics</option>
+                                            <option value="Otolaryngology (ENT)">Otolaryngology (ENT)</option>
                                             <option value="Pediatrician">Pediatrician</option>
                                             <option value="Psychiatrist">Psychiatrist</option>
-                                            <option value="General Physician">General Physician</option>
+                                            <option value="Pulmonology">Pulmonology</option>
+                                            <option value="Radiology">Radiology</option>
+                                            <option value="Rheumatology">Rheumatology</option>
+                                            <option value="Surgery (General)">Surgery (General)</option>
+                                            <option value="Urology">Urology</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -678,7 +699,7 @@
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #3b82f6; padding-bottom: 1.5rem; margin-bottom: 2rem;">
                                         <div>
                                             <div style="font-size: 1.8rem; font-weight: 800; color: #1e40af; margin-bottom: 0.25rem;">AuraMed <span style="font-weight: 400; color: #64748b;">Digital Rx</span></div>
-                                            <div id="wsDoctorNameSheet" style="font-size: 1.1rem; font-weight: 700; color: #334155;">Dr. User Name</div>
+                                            <div id="wsDoctorNameSheet" style="font-size: 1.1rem; font-weight: 700; color: #334155;">Dr.User Name</div>
                                             <div id="wsDoctorSpecialization" style="font-size: 0.9rem; color: #64748b;">MBBS, FCPS (Medicine)</div>
                                         </div>
                                         <div style="text-align: right;">
@@ -691,7 +712,7 @@
                                     <div style="background: #f1f5f9; padding: 1rem 1.5rem; border-radius: 8px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2.5rem;">
                                         <div>
                                             <span style="font-size: 0.75rem; color: #64748b; display: block;">Patient Name</span>
-                                            <span id="wsPatientNameSheet" style="font-weight: 700; color: #1e293b;">John Doe</span>
+                                            <span id="wsPatientNameSheet" style="font-weight: 700; color: #1e293b;">Zinu Haque</span>
                                         </div>
                                         <div>
                                             <span style="font-size: 0.75rem; color: #64748b; display: block;">Age / Gender</span>
@@ -817,7 +838,7 @@
 
             <!-- Professional Renewal Modal (Multi-Step Simulation) -->
             <div id="renewalModal" class="confirm-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 3000; align-items: center; justify-content: center;">
-                <div class="glass" id="paymentModalContent" style="width: 100%; max-width: 550px; padding: 0; border-radius: 28px; overflow: hidden; position: relative;">
+                <div class="glass" id="paymentModalContent" style="width: 100%; max-width: 550px; padding: 0; border-radius: 28px; overflow-y: auto; max-height: 90vh; position: relative;">
                     <i class="fa-solid fa-xmark" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted); font-size: 1.2rem; z-index: 10;" onclick="closeRenewalModal()"></i>
                     
                     <!-- Header -->
@@ -873,11 +894,11 @@
                             </div>
                             <div class="form-group" style="margin-bottom: 1rem;">
                                 <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">bKash Wallet Number</label>
-                                <input type="text" id="walletNumber" placeholder="017XXXXXXXX" style="width: 100%; padding: 0.85rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.02);">
+                                <input type="text" id="walletNumber" autocomplete="off" placeholder="017XXXXXXXX" style="width: 100%; padding: 0.85rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.02);">
                             </div>
                             <div class="form-group">
                                 <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">Transaction ID (Reference)</label>
-                                <input type="text" id="manualTxId" placeholder="Enter TrxID from SMS" style="width: 100%; padding: 0.85rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.02);">
+                                <input type="text" id="manualTxId" autocomplete="off" placeholder="Enter TrxID from SMS" style="width: 100%; padding: 0.85rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.02);">
                             </div>
                         </div>
 
