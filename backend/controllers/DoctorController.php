@@ -8,6 +8,7 @@
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/DoctorModel.php';
 require_once __DIR__ . '/../models/UserModel.php';
+require_once __DIR__ . '/../models/SubscriptionModel.php';
 
 class DoctorController {
     private $db;
@@ -19,6 +20,7 @@ class DoctorController {
         $this->db = $database->getConnection();
         $this->doctorModel = new DoctorModel($this->db);
         $this->userModel = new UserModel($this->db);
+        $this->subscriptionModel = new SubscriptionModel($this->db);
     }
 
     /**
@@ -228,10 +230,17 @@ class DoctorController {
             $start_time = $input['start_time'];
             $end_time   = $input['end_time'];
 
-            // Check if doctor is banned
+            // Check if doctor is banned or subscription expired
             $doc = $this->doctorModel->getByUserId($doctor_id);
             if (!$doc || $doc['status'] === 'banned') {
                 $this->response("error", "Your account is suspended. You cannot add new slots.");
+                return;
+            }
+
+            // Check subscription
+            $sub = $this->subscriptionModel->getStatus($doc['id']);
+            if (!$sub || $sub['subscription_status'] !== 'active') {
+                $this->response("error", "Your subscription is not active. Please renew to manage slots.");
                 return;
             }
 

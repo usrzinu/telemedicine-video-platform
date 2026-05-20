@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const payload = {
                         name: name,
                         email: email,
+                        phone: document.getElementById('phone').value,
                         password: password,
                         role: role
                     };
@@ -167,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem('userName', result.name);
                         localStorage.setItem('userEmail', result.email);
                         localStorage.setItem('userRole', result.role);
+                        if (result.doctorId) localStorage.setItem('doctorId', result.doctorId);
 
                         showNotification('success', 'Registration successful! Redirecting to your dashboard...');
                         
@@ -221,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('userName', result.name);
                     localStorage.setItem('userEmail', result.email);
                     localStorage.setItem('userRole', result.role);
+                    if (result.doctorId) localStorage.setItem('doctorId', result.doctorId);
 
                     const redirectMap = {
                         'admin': 'admin.html',

@@ -28,39 +28,424 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadDoctorConsultationView();
     checkDoctorSubscription();
+    initNavigation();
     docSessionPollInterval = setInterval(loadDoctorConsultationView, 10000);
 });
 
+function initNavigation() {
+    const navItems = {
+        'nav-requests': 'requestsViewContainer',
+        'nav-schedule': 'scheduleViewContainer',
+        'nav-consultations': 'consultationsViewContainer',
+        'nav-patients': 'patientsViewContainer',
+        'nav-payments': 'paymentsViewContainer',
+        'nav-subscription': 'subscriptionViewContainer',
+        'nav-profile': 'profileViewContainer'
+    };
+
+    Object.keys(navItems).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.onclick = () => {
+                // Remove active from all
+                Object.keys(navItems).forEach(nid => {
+                    const nel = document.getElementById(nid);
+                    if (nel) nel.classList.remove('active');
+                });
+                // Add active to current
+                el.classList.add('active');
+
+                // Hide all views
+                Object.values(navItems).forEach(vid => {
+                    const vel = document.getElementById(vid);
+                    if (vel) vel.style.display = 'none';
+                });
+                // Show current view
+                const currentView = document.getElementById(navItems[id]);
+                if (currentView) currentView.style.display = 'block';
+
+                if (id === 'nav-subscription') {
+                    loadSubscriptionView();
+                }
+                if (id === 'nav-profile') {
+                    loadProfileView();
+                }
+            };
+        }
+    });
+}
+
+function loadProfileView() {
+    const doctorId = localStorage.getItem('doctorId') || localStorage.getItem('userId');
+    const expSlider = document.getElementById('prof-exp');
+    const expValue = document.getElementById('expValue');
+
+    if (expSlider && expValue) {
+        expSlider.oninput = () => { expValue.innerText = expSlider.value; };
+    }
+
+    // Load existing data from backend (Mock/API)
+    fetch(`${DOC_BASE}/api/profile/get?doctor_id=${doctorId}`)
+        .then(res => res.json())
+        .then(result => {
+            if (result.status === 'success') {
+                const p = result.data;
+                // [NEW] Ensure we use the correct doctor ID for future updates
+                if (p.id) localStorage.setItem('doctorId', p.id);
+                
+                document.getElementById('prof-name').value = p.name || '';
+                document.getElementById('prof-email').value = p.email || '';
+                document.getElementById('prof-phone').value = p.phone || '';
+                document.getElementById('prof-spec').value = p.specialization || 'General Physician';
+                document.getElementById('prof-exp').value = p.experience || 0;
+                document.getElementById('expValue').innerText = p.experience || 0;
+                document.getElementById('prof-fee').value = p.consultation_fee || 0;
+                document.getElementById('prof-qual').value = p.qualification || '';
+                document.getElementById('prof-license').value = p.license_number || '';
+                if (p.profile_photo) {
+                    document.getElementById('profilePreview').src = `${DOC_BASE}/${p.profile_photo}`;
+                    window.currentAvatarPath = p.profile_photo;
+                } else {
+                    document.getElementById('profilePreview').src = "https://via.placeholder.com/150";
+                    window.currentAvatarPath = null;
+                }
+                
+                // [NEW] Handle Signature
+                const sigPreview = document.getElementById('signaturePreview');
+                const sigCursive = document.getElementById('signatureCursivePreview');
+                if (p.signature_path) {
+                    sigPreview.src = `${DOC_BASE}/${p.signature_path}`;
+                    sigPreview.style.display = 'block';
+                    sigCursive.style.display = 'none';
+                    window.currentSignaturePath = p.signature_path;
+                } else {
+                    sigPreview.style.display = 'none';
+                    sigCursive.style.display = 'block';
+                    sigCursive.innerText = p.name || 'Doctor Signature';
+                    window.currentSignaturePath = null;
+                }
+            }
+        });
+}
+
+function switchProfileTab(tab) {
+    // Update tabs
+    document.querySelectorAll('.profile-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+
+    // Update panes
+    document.querySelectorAll('.profile-pane').forEach(el => el.style.display = 'none');
+    document.getElementById(`profile-pane-${tab}`).style.display = 'block';
+}
+
+function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('profilePreview').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function previewSignature(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const preview = document.getElementById('signaturePreview');
+            const cursive = document.getElementById('signatureCursivePreview');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            cursive.style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearSignature() {
+    const preview = document.getElementById('signaturePreview');
+    const cursive = document.getElementById('signatureCursivePreview');
+    const input = document.getElementById('signatureInput');
+    
+    preview.style.display = 'none';
+    preview.src = '';
+    cursive.style.display = 'block';
+    input.value = '';
+    window.currentSignaturePath = null;
+}
+
+async function saveProfileData(btn) {
+    const doctorId = localStorage.getItem('doctorId') || localStorage.getItem('userId');
+    const saveBtn = btn || (window.event ? window.event.target : null);
+    const originalText = saveBtn ? saveBtn.innerHTML : 'Save Profile Changes';
+
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+    }
+
+    const profileData = {
+        doctor_id: doctorId,
+        name: document.getElementById('prof-name').value,
+        gender: document.getElementById('prof-gender').value,
+        dob: document.getElementById('prof-dob').value,
+        phone: document.getElementById('prof-phone').value,
+        bio: document.getElementById('prof-bio').value,
+        specialization: document.getElementById('prof-spec').value,
+        experience: document.getElementById('prof-exp').value,
+        qualification: document.getElementById('prof-qual').value,
+        license_number: document.getElementById('prof-license').value,
+        consultation_fee: document.getElementById('prof-fee').value,
+        consultation_time: document.getElementById('prof-duration').value,
+        clinic_address: document.getElementById('prof-address').value,
+        signature_path: window.currentSignaturePath || '',
+        profile_photo: window.currentAvatarPath || ''
+    };
+
+    // [NEW] Handle Avatar Upload first if a file is selected
+    const avatarInput = document.getElementById('avatarInput');
+    if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+        const avatarFormData = new FormData();
+        avatarFormData.append('doctor_id', doctorId);
+        avatarFormData.append('avatar', avatarInput.files[0]);
+        
+        try {
+            const avatarRes = await fetch(`${DOC_BASE}/api/doctor/upload_avatar.php`, {
+                method: 'POST',
+                body: avatarFormData
+            });
+            const avatarResult = await avatarRes.json();
+            if (avatarResult.status === 'success') {
+                profileData.profile_photo = avatarResult.path;
+                window.currentAvatarPath = avatarResult.path;
+            } else {
+                showToast("Profile photo upload failed: " + avatarResult.message, "error");
+            }
+        } catch (err) {
+            console.error("Avatar upload error:", err);
+        }
+    }
+
+    // [NEW] Handle Signature Upload first if a file is selected
+    const sigInput = document.getElementById('signatureInput');
+    if (sigInput && sigInput.files && sigInput.files[0]) {
+        const sigFormData = new FormData();
+        sigFormData.append('doctor_id', doctorId);
+        sigFormData.append('signature', sigInput.files[0]);
+        
+        try {
+            const sigRes = await fetch(`${DOC_BASE}/api/doctor/upload_signature.php`, {
+                method: 'POST',
+                body: sigFormData
+            });
+            const sigResult = await sigRes.json();
+            if (sigResult.status === 'success') {
+                profileData.signature_path = sigResult.path;
+                window.currentSignaturePath = sigResult.path;
+            } else {
+                showToast("Signature upload failed: " + sigResult.message, "error");
+                // Continue with profile save anyway or stop? Let's continue for other fields.
+            }
+        } catch (err) {
+            console.error("Signature upload error:", err);
+        }
+    }
+
+    try {
+        const response = await fetch(`${DOC_BASE}/api/profile/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(profileData)
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            showToast("Profile updated successfully!", "success");
+            // Reload view to reflect all changes (names, photos, signatures)
+            loadProfileView();
+        } else {
+            showToast(result.message || "Failed to update profile.", "error");
+        }
+    } catch (e) {
+        console.error("Profile Save Error:", e);
+        showToast("Error while saving profile: " + e.message, "error");
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
+    }
+}
+
 async function checkDoctorSubscription() {
-    const doctorId = localStorage.getItem('userId');
+    const doctorId = localStorage.getItem('doctorId'); // Use doctorId if available, fallback to userId
+    const userId = localStorage.getItem('userId');
     const badge = document.getElementById('subscriptionBadge');
     const planText = document.getElementById('subPlanText');
     
-    if (!doctorId || !badge) return;
+    if (!userId || !badge) return;
     
     try {
-        const response = await fetch(`${DOC_BASE}/api/doctor/manage_subscription.php?doctor_id=${doctorId}`);
+        const response = await fetch(`${DOC_BASE}/api/subscription/status?doctor_id=${doctorId || userId}`);
         const result = await response.json();
         
-        if (result.success && result.data) {
-            const sub = result.data;
+        if (result.status === 'success' && result.data.current) {
+            const sub = result.data.current;
             badge.style.display = 'flex';
-            planText.innerText = sub.plan_name;
+            planText.innerText = 'Professional';
             
-            if (sub.is_expired) {
-                badge.style.background = 'rgba(239, 68, 68, 0.1)';
-                badge.style.borderColor = '#ef4444';
-                planText.style.color = '#ef4444';
-                planText.innerText += ' (Expired)';
-            } else {
+            if (sub.subscription_status === 'active') {
                 badge.style.background = 'rgba(16, 185, 129, 0.1)';
                 badge.style.borderColor = '#10b981';
                 planText.style.color = '#10b981';
+            } else {
+                badge.style.background = 'rgba(239, 68, 68, 0.1)';
+                badge.style.borderColor = '#ef4444';
+                planText.style.color = '#ef4444';
+                planText.innerText = sub.subscription_status.toUpperCase();
             }
         }
     } catch (e) {
         console.error("Error checking subscription:", e);
     }
+}
+
+async function loadSubscriptionView() {
+    const doctorId = localStorage.getItem('doctorId') || localStorage.getItem('userId');
+    const historyBody = document.getElementById('billingHistoryBody');
+    const statusBadge = document.getElementById('subStatusBadge');
+    const expiryText = document.getElementById('subExpiryText');
+
+    if (!doctorId || !historyBody) return;
+
+    try {
+        const response = await fetch(`${DOC_BASE}/api/subscription/status?doctor_id=${doctorId}`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const { current, history } = result.data;
+
+            // Update Status Card
+            statusBadge.innerText = current.subscription_status.toUpperCase();
+            statusBadge.style.background = current.subscription_status === 'active' ? '#10b98120' : '#ef444420';
+            statusBadge.style.color = current.subscription_status === 'active' ? '#10b981' : '#ef4444';
+            expiryText.innerText = current.subscription_expiry ? formatDate(current.subscription_expiry) : 'N/A';
+
+            // Update History Table
+            if (history && history.length > 0) {
+                historyBody.innerHTML = history.map(h => `
+                    <tr style="border-bottom: 1px solid var(--glass-border);">
+                        <td style="padding: 1rem;">${formatDate(h.created_at)}</td>
+                        <td style="padding: 1rem;">${h.plan_name}</td>
+                        <td style="padding: 1rem; font-weight: 700;">${h.amount} TK</td>
+                        <td style="padding: 1rem; font-family: monospace; font-size: 0.85rem;">${h.transaction_id}</td>
+                        <td style="padding: 1rem;">
+                            <span style="padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: #10b98120; color: #10b981;">
+                                ${h.payment_status.toUpperCase()}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                historyBody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">No payment history found.</td></tr>';
+            }
+        }
+    } catch (e) {
+        console.error("Error loading subscription view:", e);
+    }
+}
+
+function openRenewalModal() {
+    const modal = document.getElementById('renewalModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        resetPaymentSteps();
+    }
+}
+
+function resetPaymentSteps() {
+    ['paymentStep1', 'paymentStep2', 'paymentStep3', 'paymentStep4'].forEach(id => {
+        document.getElementById(id).style.display = (id === 'paymentStep1') ? 'block' : 'none';
+    });
+    // Reset selections
+    document.querySelectorAll('.pay-method-card').forEach(el => el.classList.remove('active'));
+    document.getElementById('continueToPayBtn').disabled = true;
+    document.getElementById('continueToPayBtn').style.opacity = '0.5';
+    window.selectedPaymentMethod = null;
+}
+
+function closeRenewalModal() {
+    const modal = document.getElementById('renewalModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function selectPaymentMethod(method) {
+    window.selectedPaymentMethod = method;
+    document.querySelectorAll('.pay-method-card').forEach(el => el.classList.remove('active'));
+    document.getElementById(`method-${method}`).classList.add('active');
+    
+    const btn = document.getElementById('continueToPayBtn');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+}
+
+function goToPaymentForm() {
+    document.getElementById('paymentStep1').style.display = 'none';
+    document.getElementById('paymentStep2').style.display = 'block';
+    
+    // Toggle correct form
+    const isMobile = ['bkash', 'nagad'].includes(window.selectedPaymentMethod);
+    document.getElementById('bkashForm').style.display = isMobile ? 'block' : 'none';
+    document.getElementById('cardForm').style.display = isMobile ? 'none' : 'block';
+}
+
+function backToMethods() {
+    document.getElementById('paymentStep2').style.display = 'none';
+    document.getElementById('paymentStep1').style.display = 'block';
+}
+
+async function processProfessionalPayment() {
+    const doctorId = localStorage.getItem('doctorId') || localStorage.getItem('userId');
+    const manualTxId = document.getElementById('manualTxId').value.trim();
+    
+    // Switch to processing step
+    document.getElementById('paymentStep2').style.display = 'none';
+    document.getElementById('paymentStep3').style.display = 'block';
+
+    // Simulate 2.5s verification delay
+    setTimeout(async () => {
+        try {
+            // If they provided a manual TxID, use it; otherwise generate a professional one
+            const finalTxId = manualTxId || (window.selectedPaymentMethod.toUpperCase() + '_' + Math.random().toString(36).substr(2, 9).toUpperCase());
+            
+            const response = await fetch(`${DOC_BASE}/api/subscription/renew`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    doctor_id: doctorId,
+                    plan_name: 'Monthly Professional',
+                    amount: 1000,
+                    transaction_id: finalTxId
+                })
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                document.getElementById('paymentStep3').style.display = 'none';
+                document.getElementById('paymentStep4').style.display = 'block';
+                
+                loadSubscriptionView();
+                checkDoctorSubscription();
+            } else {
+                showToast(result.message || "Activation failed.", "error");
+                backToMethods();
+            }
+        } catch (e) {
+            console.error("Payment error:", e);
+            showToast("Network error during verification.", "error");
+            backToMethods();
+        }
+    }, 2500);
 }
 
 /* =========================================================
@@ -543,6 +928,12 @@ function loadWorkspaceWithData(bookingId, patient, mode) {
         // Initial sync
         updateVitalsSheet();
 
+        // [FIX] Attach Download Draft Listener
+        const draftBtn = document.getElementById('wsDownloadDraftBtn');
+        if (draftBtn) {
+            draftBtn.onclick = () => downloadDraftPrescription();
+        }
+
         // Start auto-polling for reports every 12 seconds
         if (wsReportsPollInterval) clearInterval(wsReportsPollInterval);
         wsReportsPollInterval = setInterval(() => loadPatientReports(bookingId), 12000);
@@ -720,7 +1111,7 @@ async function loadPatientHistory(patientId, currentBookingId) {
     list.innerHTML = '<p class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading history...</p>';
 
     try {
-        const url = `${DOC_BASE}/api/get_medical_history.php?patient_id=${patientId}&exclude_booking_id=${currentBookingId}`;
+        const url = `${DOC_BASE}/api/get_medical_history.php?patient_id=${patientId}&exclude_booking_id=${currentBookingId}&doctor_id=${localStorage.getItem('userId')}`;
         const response = await fetch(url);
         const result = await response.json();
 
@@ -985,6 +1376,64 @@ async function savePrescription() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-file-signature"></i> Finalize & Generate Prescription';
+    }
+}
+
+async function downloadDraftPrescription() {
+    const btn = document.getElementById('wsDownloadDraftBtn');
+    if (!btn) return;
+
+    // Collect Medicine Data
+    const medicineRows = document.querySelectorAll('.medicine-row');
+    const medicines = [];
+    medicineRows.forEach(row => {
+        const nameInput = row.querySelector('.med-name');
+        if (nameInput && nameInput.value.trim()) {
+            medicines.push({
+                name: nameInput.value.trim(),
+                dosage: row.querySelector('.med-dosage').value.trim() || '',
+                frequency: row.querySelector('.med-frequency').value.trim() || '',
+                duration: row.querySelector('.med-duration').value.trim() || '',
+                instructions: row.querySelector('.med-instructions').value.trim() || ''
+            });
+        }
+    });
+
+    // Get names safely
+    const welcomeMsg = document.getElementById('welcomeMsg');
+    const docName = welcomeMsg ? welcomeMsg.innerText.replace('Welcome, ', '') : 'Doctor';
+    
+    const patientNameEl = document.getElementById('wsPatientName');
+    let patientName = 'Patient';
+    if (patientNameEl) {
+        // Remove "Consultation: " or "Medical Record: " prefixes
+        patientName = patientNameEl.innerText.replace('Consultation: ', '').replace('Medical Record: ', '');
+    }
+
+    const draftData = {
+        doctor_name: docName,
+        patient_name: patientName,
+        signature_path: window.currentSignaturePath || '',
+        vitals: {
+            weight: document.getElementById('wsWeight') ? document.getElementById('wsWeight').value.trim() : '',
+            bp: document.getElementById('wsBP') ? document.getElementById('wsBP').value.trim() : '',
+            temp: document.getElementById('wsTemp') ? document.getElementById('wsTemp').value.trim() : '',
+            oxygen: document.getElementById('wsOxygen') ? document.getElementById('wsOxygen').value.trim() : ''
+        },
+        clinical: {
+            symptoms: document.getElementById('wsSymptoms') ? document.getElementById('wsSymptoms').value.trim() : '',
+            diagnosis: document.getElementById('wsDiagnosis') ? document.getElementById('wsDiagnosis').value.trim() : '',
+            advice: document.getElementById('wsAdvice') ? document.getElementById('wsAdvice').value.trim() : ''
+        },
+        medicines: medicines
+    };
+
+    try {
+        const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(draftData))));
+        window.open(`${DOC_BASE}/api/generate_draft_pdf.php?d=${encodedData}`, '_blank');
+    } catch (e) {
+        console.error("Draft Generation Error:", e);
+        showToast("Error creating draft preview.", "error");
     }
 }
 

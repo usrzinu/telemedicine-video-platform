@@ -15,7 +15,7 @@ try {
     $stmt = $db->prepare("
         SELECT p.*, 
                u_doc.name AS doctor_name, 
-               d.specialization, d.qualification, d.license_number,
+               d.specialization, d.qualification, d.license_number, d.signature_path,
                u_pat.name AS patient_name, u_pat.age as patient_age, u_pat.gender, u_pat.blood_group,
                cr.weight, cr.blood_pressure, cr.temperature, cr.oxygen_level
         FROM prescriptions p
@@ -186,15 +186,20 @@ $export = isset($_GET['export']) && $_GET['export'] === 'pdf';
         }
         .signature-box {
             text-align: center;
-            width: 220px;
+            width: 240px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .signature-line {
-            border-top: 2px solid #1e293b;
-            margin-top: 4rem;
+            border-top: 1.5px solid #1e293b;
+            width: 100%;
+            margin-top: 0;
             padding-top: 0.5rem;
             font-weight: 700;
             color: #1e293b;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
         }
         .btn-print {
             position: fixed;
@@ -211,11 +216,30 @@ $export = isset($_GET['export']) && $_GET['export'] === 'pdf';
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            z-index: 1000;
         }
         @media print {
             body { background: white; padding: 0; }
-            .prescription-container { box-shadow: none; width: 100%; max-width: 100%; margin: 0; }
+            .prescription-container { box-shadow: none; width: 100%; max-width: 100%; margin: 0; border: none; }
             .btn-print { display: none; }
+        }
+        
+        /* Signature Styles */
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+        .signature-placeholder {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2.6rem;
+            color: #1e3a8a;
+            margin-bottom: -18px;
+            line-height: 1;
+            transform: rotate(-2deg);
+            display: inline-block;
+            text-shadow: 1px 1px 2px rgba(30, 58, 138, 0.1);
+        }
+        .signature-image {
+            max-height: 75px;
+            margin-bottom: -15px;
+            transform: rotate(-1deg);
         }
     </style>
 </head>
@@ -332,6 +356,14 @@ $export = isset($_GET['export']) && $_GET['export'] === 'pdf';
                 Verification code: <?php echo strtoupper(substr(md5($prescription['id']), 0, 10)); ?>
             </div>
             <div class="signature-box">
+                <?php 
+                $sigPath = $prescription['signature_path'];
+                $fullSigPath = __DIR__ . '/../' . $sigPath;
+                if (!empty($sigPath) && file_exists($fullSigPath)): ?>
+                    <img src="../<?php echo htmlspecialchars($sigPath); ?>" class="signature-image">
+                <?php else: ?>
+                    <div class="signature-placeholder"><?php echo htmlspecialchars($prescription['doctor_name']); ?></div>
+                <?php endif; ?>
                 <div class="signature-line">Doctor's Signature</div>
             </div>
         </div>

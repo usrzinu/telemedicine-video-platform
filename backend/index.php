@@ -94,7 +94,18 @@ switch ($route) {
     case '/api/support/reply':
     case '/api/admin/support/tickets':
     case '/api/admin/support/reply':
+    case '/api/admin/support/unread-count':
         require_once __DIR__ . '/routes/support.php';
+        break;
+
+    case '/api/subscription/status':
+    case '/api/subscription/renew':
+        require_once __DIR__ . '/routes/subscription.php';
+        break;
+
+    case '/api/profile/get':
+    case '/api/profile/update':
+        require_once __DIR__ . '/routes/profile.php';
         break;
 
     default:

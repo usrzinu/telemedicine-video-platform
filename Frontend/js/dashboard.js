@@ -127,12 +127,37 @@ async function initAdminDashboard() {
     renderPendingView();
     setupAdminNav();
 
+    // Check for unread patient messages immediately, then every 30 seconds
+    checkUnreadMessages();
+    setInterval(checkUnreadMessages, 30000);
+
     // Stat card shortcuts
     document.getElementById('statApprovalCard')?.addEventListener('click', () => {
         activateNav('overviewBtn', 'sidebarPending');
         renderPendingView();
     });
+}
 
+/**
+ * Polls backend for unread patient messages and updates the Messages badge.
+ */
+async function checkUnreadMessages() {
+    try {
+        const res = await fetch('/api/admin/support/unread-count');
+        const data = await res.json();
+        const badge = document.getElementById('msgBadge');
+        if (!badge) return;
+
+        const count = data.count || 0;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) {
+        // Silent fail — badge stays hidden on network error
+    }
 }
 
 function setupAdminNav() {
@@ -141,7 +166,13 @@ function setupAdminNav() {
         totalDoctorsBtn:  () => { activateNav('totalDoctorsBtn', null);           renderApprovedDoctorsView();    },
         sidebarPending:   () => { activateNav('overviewBtn', 'sidebarPending');  renderPendingView();            },
         sidebarDoctors:   () => { activateNav(null, 'sidebarDoctors');           renderDoctorsListView();        },
-        sidebarMessages:  () => { activateNav(null, 'sidebarMessages');           renderAdminSupportView();       },
+        sidebarMessages:  () => { 
+            activateNav(null, 'sidebarMessages'); 
+            renderAdminSupportView();
+            // Clear badge immediately on click — tickets are marked read when opened
+            const badge = document.getElementById('msgBadge');
+            if (badge) badge.style.display = 'none';
+        },
         sidebarSettings:  () => { activateNav(null, 'sidebarSettings');           renderComingSoon('Settings',  'fa-gear');    },
     };
     Object.entries(routes).forEach(([id, fn]) => document.getElementById(id)?.addEventListener('click', fn));
@@ -586,7 +617,11 @@ async function loadPatientAppointments() {
             }
 
             listContainer.innerHTML = data.map(app => {
-                const photoPath = app.profile_photo ? (app.profile_photo.startsWith('/') ? app.profile_photo : '/' + app.profile_photo) : '';
+                let photoPath = app.profile_photo || '';
+                if (photoPath) {
+                    photoPath = photoPath.replace(/^\/+/, '').replace(/^\.\.\/+/, '');
+                    photoPath = '../' + photoPath;
+                }
                 
                 let isExpired = false;
                 try {
@@ -643,6 +678,10 @@ async function loadPatientAppointments() {
     }
 }
 
+
+// ── Doctor search state ────────────────────────────────────────────────────
+let allDoctors = []; // cached after first fetch
+
 async function loadApprovedDoctors() {
     const listContainer = document.getElementById('doctorList');
     if (!listContainer) return;
@@ -650,47 +689,118 @@ async function loadApprovedDoctors() {
     try {
         const { status, data } = await fetchApi('/api/doctors', 'GET');
         if (status === 'success') {
-            if (data.length === 0) {
-                listContainer.innerHTML = '<p class="text-muted">No specialists are currently available.</p>';
-                return;
-            }
-            listContainer.innerHTML = data.map(doc => {
-                const photoPath = doc.profile_photo.startsWith('/') ? doc.profile_photo : '/' + doc.profile_photo;
-                return `
-                <div class="doctor-card">
-                    <div class="doctor-card-img-container">
-                        <img src="${photoPath}" alt="${doc.doctor_name}" class="doctor-card-img"
-                            onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(doc.doctor_name)}&background=0ea5e9&color=fff'">
-                    </div>
-                    <div class="doctor-card-info">
-                        <h3>Dr. ${doc.doctor_name}</h3>
-                        <div class="specialty">${doc.specialization}</div>
-                    </div>
-                    <div class="doctor-card-stats">
-                        <div class="stat-item">
-                            <i class="fa-solid fa-graduation-cap"></i>
-                            <div><span style="display:block;font-weight:600;color:var(--text-main);">${doc.qualification}</span></div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fa-solid fa-briefcase-medical"></i>
-                            <div><span style="display:block;font-weight:600;color:var(--text-main);">${doc.experience} Years Experience</span></div>
-                        </div>
-                    </div>
-                    <div class="doctor-card-footer">
-                        <div class="price-tag">
-                            <span class="label">Consultation Fee</span>
-                            <span class="amount">৳${doc.consultation_fee}</span>
-                        </div>
-                        <button onclick="openBookingModal(${doc.user_id}, '${doc.doctor_name.replace(/'/g, "\\'")}', ${doc.consultation_fee})" class="btn btn-primary" style="padding:0.6rem 1.25rem;font-weight:700;border-radius:999px;">Book Now</button>
-                    </div>
-                </div>`;
-            }).join('');
+            allDoctors = data; // cache for filtering
+            renderDoctorCards(allDoctors);
         }
     } catch (err) {
         console.error('Error loading doctors:', err);
         listContainer.innerHTML = '<p style="color:#ef4444;">Could not load specialist directory. Please try again later.</p>';
     }
 }
+
+/**
+ * Renders an array of doctor objects into #doctorList.
+ * Called by loadApprovedDoctors() and filterDoctors().
+ */
+function renderDoctorCards(doctors) {
+    const listContainer = document.getElementById('doctorList');
+    const countEl = document.getElementById('doctorResultCount');
+    if (!listContainer) return;
+
+    if (doctors.length === 0) {
+        listContainer.innerHTML = `
+            <div style="grid-column:1/-1; text-align:center; padding:3rem 1rem; color:var(--text-muted);">
+                <i class="fa-solid fa-user-doctor" style="font-size:2.5rem; opacity:0.2; display:block; margin-bottom:1rem;"></i>
+                <p style="margin:0; font-size:0.95rem;">No doctors found matching your search.</p>
+                <p style="margin:0.5rem 0 0; font-size:0.82rem;">Try a different name or specialization.</p>
+            </div>`;
+        if (countEl) countEl.textContent = '0 results';
+        return;
+    }
+
+    // Update result count label
+    if (countEl) {
+        countEl.textContent = doctors.length === allDoctors.length
+            ? `${allDoctors.length} specialist${allDoctors.length !== 1 ? 's' : ''}`
+            : `${doctors.length} of ${allDoctors.length} doctors`;
+    }
+
+    listContainer.innerHTML = doctors.map(doc => {
+        let photoPath = doc.profile_photo || '';
+        if (photoPath) {
+            photoPath = photoPath.replace(/^\/+/, '').replace(/^\.\.\/+/, '');
+            photoPath = '../' + photoPath;
+        }
+        return `
+        <div class="doctor-card">
+            <div class="doctor-card-img-container">
+                <img src="${photoPath}" alt="${doc.doctor_name}" class="doctor-card-img"
+                    onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(doc.doctor_name)}&background=0ea5e9&color=fff'">
+            </div>
+            <div class="doctor-card-info">
+                <h3>Dr. ${doc.doctor_name}</h3>
+                <div class="specialty">${doc.specialization}</div>
+            </div>
+            <div class="doctor-card-stats">
+                <div class="stat-item">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <div><span style="display:block;font-weight:600;color:var(--text-main);">${doc.qualification}</span></div>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-solid fa-briefcase-medical"></i>
+                    <div><span style="display:block;font-weight:600;color:var(--text-main);">${doc.experience} Years Experience</span></div>
+                </div>
+            </div>
+            <div class="doctor-card-footer">
+                <div class="price-tag">
+                    <span class="label">Consultation Fee</span>
+                    <span class="amount">৳${doc.consultation_fee}</span>
+                </div>
+                <button onclick="openBookingModal(${doc.user_id}, '${doc.doctor_name.replace(/'/g, "\\'")}', ${doc.consultation_fee})"
+                    class="btn btn-primary" style="padding:0.6rem 1.25rem;font-weight:700;border-radius:999px;">Book Now</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+/**
+ * Filters the cached allDoctors by name or specialization.
+ * Triggered on every keystroke in #doctorSearchInput.
+ */
+function filterDoctors() {
+    const input = document.getElementById('doctorSearchInput');
+    const clearBtn = document.getElementById('doctorSearchClear');
+    if (!input) return;
+
+    const term = input.value.trim().toLowerCase();
+
+    // Show/hide the clear ✕ button
+    if (clearBtn) clearBtn.style.display = term ? 'block' : 'none';
+
+    if (!term) {
+        renderDoctorCards(allDoctors);
+        return;
+    }
+
+    const filtered = allDoctors.filter(doc =>
+        (doc.doctor_name || '').toLowerCase().includes(term) ||
+        (doc.specialization || '').toLowerCase().includes(term)
+    );
+
+    renderDoctorCards(filtered);
+}
+
+/**
+ * Clears the search input and resets the list to all doctors.
+ */
+function clearDoctorSearch() {
+    const input = document.getElementById('doctorSearchInput');
+    const clearBtn = document.getElementById('doctorSearchClear');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    renderDoctorCards(allDoctors);
+}
+
 
 async function openBookingModal(doctorId, doctorName, fee) {
     const modal = document.getElementById('bookingModal');

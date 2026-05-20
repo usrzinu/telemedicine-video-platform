@@ -57,9 +57,27 @@ class DoctorModel {
      * Get doctor profile by user ID
      */
     public function getByUserId($user_id) {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE user_id = :user_id LIMIT 1";
+        $query = "SELECT d.*, u.name, u.email, u.phone, u.gender, u.dob, u.bio
+                  FROM " . $this->table_name . " d
+                  JOIN users u ON d.user_id = u.id
+                  WHERE d.user_id = :user_id LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get doctor profile by doctor ID
+     */
+    public function getById($doctor_id) {
+        $query = "SELECT d.*, u.name, u.email, u.phone, u.gender, u.dob, u.bio
+                  FROM " . $this->table_name . " d
+                  JOIN users u ON d.user_id = u.id
+                  WHERE d.id = :doctor_id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':doctor_id', $doctor_id);
         $stmt->execute();
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -68,10 +86,10 @@ class DoctorModel {
      * Get all approved doctors for the landing page
      */
     public function getApprovedDoctors() {
-        $query = "SELECT d.id, d.user_id, d.specialization, d.experience, d.qualification, d.consultation_fee, d.profile_photo, u.name as doctor_name, u.email 
+        $query = "SELECT d.id, d.user_id, d.specialization, d.experience, d.qualification, d.consultation_fee, d.profile_photo, u.name as doctor_name, u.email, u.phone 
                   FROM " . $this->table_name . " d
                   JOIN users u ON d.user_id = u.id
-                  WHERE d.status = 'approved'
+                  WHERE d.status = 'approved' AND d.subscription_status = 'active'
                   ORDER BY d.created_at DESC";
         
         $stmt = $this->conn->prepare($query);
@@ -321,6 +339,118 @@ class DoctorModel {
             "summary" => $summary,
             "patients" => $patients
         ];
+    }
+
+    /**
+     * Update professional profile
+     */
+    public function updateProfile($doctor_id, $data) {
+        try {
+            $this->conn->beginTransaction();
+
+            // 1. Update doctors table
+            $query = "UPDATE " . $this->table_name . " SET 
+                      specialization = :specialization,
+                      experience = :experience,
+                      qualification = :qualification,
+                      consultation_fee = :consultation_fee,
+                      license_number = :license_number,
+                      clinic_address = :clinic_address,
+                      consultation_time = :consultation_time,
+                      signature_path = :signature_path,
+                      profile_photo = :profile_photo
+                      WHERE id = :doctor_id";
+            
+            $stmt = $this->conn->prepare($query);
+            $experience = !empty($data['experience']) ? intval($data['experience']) : 0;
+            $fee = !empty($data['consultation_fee']) ? floatval($data['consultation_fee']) : 0;
+            $time = !empty($data['consultation_time']) ? intval($data['consultation_time']) : 20;
+
+            $spec = !empty($data['specialization']) ? $data['specialization'] : 'General Physician';
+            $qual = !empty($data['qualification']) ? $data['qualification'] : '';
+            $address = !empty($data['clinic_address']) ? $data['clinic_address'] : '';
+            $sigPath = !empty($data['signature_path']) ? $data['signature_path'] : '';
+            $profilePhoto = !empty($data['profile_photo']) ? $data['profile_photo'] : '';
+
+            $stmt->bindParam(':specialization', $spec);
+            $stmt->bindParam(':experience', $experience);
+            $stmt->bindParam(':qualification', $qual);
+            $stmt->bindParam(':consultation_fee', $fee);
+            $stmt->bindParam(':license_number', $data['license_number']);
+            $stmt->bindParam(':clinic_address', $address);
+            $stmt->bindParam(':consultation_time', $time);
+            $stmt->bindParam(':signature_path', $sigPath);
+            $stmt->bindParam(':profile_photo', $profilePhoto);
+            $stmt->bindParam(':doctor_id', $doctor_id);
+            $stmt->execute();
+            
+            // If no rows were updated, it might be that doctor_id provided was actually user_id
+            if ($stmt->rowCount() === 0) {
+                $q2 = "UPDATE " . $this->table_name . " SET 
+                       specialization = :specialization,
+                       experience = :experience,
+                       qualification = :qualification,
+                       consultation_fee = :consultation_fee,
+                       license_number = :license_number,
+                       clinic_address = :clinic_address,
+                       consultation_time = :consultation_time,
+                       signature_path = :signature_path,
+                       profile_photo = :profile_photo
+                       WHERE user_id = :user_id";
+                $s2 = $this->conn->prepare($q2);
+                $s2->bindParam(':specialization', $spec);
+                $s2->bindParam(':experience', $experience);
+                $s2->bindParam(':qualification', $qual);
+                $s2->bindParam(':consultation_fee', $fee);
+                $s2->bindParam(':license_number', $data['license_number']);
+                $s2->bindParam(':clinic_address', $address);
+                $s2->bindParam(':consultation_time', $time);
+                $s2->bindParam(':signature_path', $sigPath);
+                $s2->bindParam(':profile_photo', $profilePhoto);
+                $s2->bindParam(':user_id', $doctor_id);
+                $s2->execute();
+            }
+
+            // 2. Get user_id to update users table (ensure we have the right one)
+            $uGet = "SELECT user_id FROM " . $this->table_name . " WHERE id = :id OR user_id = :uid LIMIT 1";
+            $stGet = $this->conn->prepare($uGet);
+            $stGet->bindParam(':id', $doctor_id);
+            $stGet->bindParam(':uid', $doctor_id);
+            $stGet->execute();
+            $dRes = $stGet->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$dRes) throw new Exception("Doctor record not found during update verification");
+            $user_id = $dRes['user_id'];
+
+            // 3. Update users table
+            $uQuery = "UPDATE users SET 
+                       name = :name,
+                       phone = :phone,
+                       gender = :gender,
+                       dob = :dob,
+                       bio = :bio
+                       WHERE id = :user_id";
+            $uStmt = $this->conn->prepare($uQuery);
+            $uStmt->bindParam(':name', $data['name']);
+            $uStmt->bindParam(':phone', $data['phone']);
+            $uStmt->bindParam(':gender', $data['gender']);
+            
+            // Fix: Handle empty date for PostgreSQL
+            $dob = !empty($data['dob']) ? $data['dob'] : null;
+            $uStmt->bindParam(':dob', $dob);
+            
+            $uStmt->bindParam(':bio', $data['bio']);
+            $uStmt->bindParam(':user_id', $user_id);
+            $uStmt->execute();
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($this->conn && $this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            throw $e;
+        }
     }
 }
 ?>

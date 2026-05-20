@@ -1,7 +1,5 @@
-/**
- * LANDING PAGE JS
- * Handles dynamic content loading for the landing page.
- */
+// Use relative path to root since index.html is in /Frontend/
+const REL_BASE = '../';
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchDoctors();
@@ -15,7 +13,7 @@ async function fetchDoctors() {
     if (!doctorsList) return;
 
     try {
-        const response = await fetch('/api/doctors');
+        const response = await fetch(`${REL_BASE}api/doctors`);
         const result = await response.json();
 
         if (result.status === 'success' && result.data.length > 0) {
@@ -45,42 +43,65 @@ function renderDoctors(doctors) {
     doctorsList.innerHTML = ''; // Clear loading message
 
     doctors.forEach(doc => {
-        // Ensure image path is root-relative (e.g., /backend/uploads/...)
-        const photoPath = (doc.profile_photo && doc.profile_photo.length > 0) 
-            ? (doc.profile_photo.startsWith('/') ? doc.profile_photo : '/' + doc.profile_photo)
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.doctor_name)}&background=0ea5e9&color=fff&size=128`;
+        // Fix duplicate Dr. prefix
+        let displayName = doc.doctor_name;
+        if (displayName.toLowerCase().startsWith('dr.')) {
+            displayName = displayName.substring(3).trim();
+        }
+
+        // Ensure image path is correctly resolved relative to the root
+        let photoPath = (doc.profile_photo && doc.profile_photo.length > 0) ? doc.profile_photo : '';
+        
+        if (photoPath) {
+            // Remove leading slashes or ../ if they exist in the DB (for cleanup)
+            photoPath = photoPath.replace(/^\/+/, '').replace(/^\.\.\/+/, '');
+            photoPath = `${REL_BASE}${photoPath}`;
+        } else {
+            photoPath = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0ea5e9&color=fff&size=128`;
+        }
         
         const card = document.createElement('div');
         card.className = 'doctor-card';
         card.style.margin = '10px'; // Add some breathing room in the grid
         
+        const qualification = doc.qualification && doc.qualification.trim() !== "" ? doc.qualification : "Clinical Professional";
+        const fee = (doc.consultation_fee && parseFloat(doc.consultation_fee) > 0) ? `৳${doc.consultation_fee}` : "Consultation Fee TBD";
+        const phone = doc.phone || "Contact Not Set";
+
         card.innerHTML = `
             <div class="doctor-card-img-container" style="margin: 0 auto;">
-                <img src="${photoPath}" alt="${doc.doctor_name}" class="doctor-card-img" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(doc.doctor_name)}&background=0ea5e9&color=fff'">
+                <img src="${photoPath}" alt="${displayName}" class="doctor-card-img" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0ea5e9&color=fff'">
             </div>
             
             <div class="doctor-card-info" style="text-align: center;">
-                <h3 style="margin-bottom: 0.25rem;">Dr. ${doc.doctor_name}</h3>
-                <div class="specialty" style="color: var(--primary); font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">${doc.specialization}</div>
+                <h3 style="margin-bottom: 0.25rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    Dr. ${displayName}
+                    <i class="fa-solid fa-circle-check" style="color: #0ea5e9; font-size: 1rem;" title="Verified Professional"></i>
+                </h3>
+                <div class="specialty" style="color: var(--primary); font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; background: rgba(14, 165, 233, 0.1); padding: 0.2rem 0.75rem; border-radius: 999px; display: inline-block;">${doc.specialization}</div>
             </div>
 
-            <div class="doctor-card-stats" style="text-align: left;">
-                <div class="stat-item" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">${doc.qualification}</span>
+            <div class="doctor-card-stats" style="text-align: left; margin-top: 0.5rem;">
+                <div class="stat-item" style="padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s;">
+                    <i class="fa-solid fa-graduation-cap" style="color: var(--primary); font-size: 1.1rem;"></i>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">${qualification}</span>
                 </div>
-                <div class="stat-item" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fa-solid fa-briefcase-medical" style="color: var(--primary);"></i>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">${doc.experience} Years Experience</span>
+                <div class="stat-item" style="padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s;">
+                    <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); font-size: 1.1rem;"></i>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">${doc.experience} Years Experience</span>
+                </div>
+                <div class="stat-item" style="padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s;">
+                    <i class="fa-solid fa-phone" style="color: var(--primary); font-size: 1.1rem;"></i>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">${phone}</span>
                 </div>
             </div>
 
-            <div class="doctor-card-footer" style="padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="doctor-card-footer" style="padding-top: 1.25rem; margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="price-tag">
-                    <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Consultation Fee</span>
-                    <span style="font-weight: 800; color: #10b981; font-size: 1.25rem;">৳${doc.consultation_fee}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.2rem;">Consultation Fee</span>
+                    <span style="font-weight: 800; color: #10b981; font-size: 1.4rem;">${fee}</span>
                 </div>
-                <a href="signup.html?role=patient" class="btn btn-primary" style="padding: 0.6rem 1.25rem; font-weight: 700; border-radius: 999px; font-size: 0.85rem;">
+                <a href="signup.html?role=patient" class="btn btn-primary" style="padding: 0.7rem 1.5rem; font-weight: 700; border-radius: 12px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);">
                     Book Now
                 </a>
             </div>

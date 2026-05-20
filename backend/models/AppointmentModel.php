@@ -253,5 +253,15 @@ class AppointmentModel {
             throw $e;
         }
     }
+    /**
+     * Get single appointment by ID
+     */
+    public function getById($id) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
 ?>
